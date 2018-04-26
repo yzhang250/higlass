@@ -1149,6 +1149,21 @@ class TrackRenderer extends React.Component {
       };
     }
 
+    const chromosomeLabels = this.currentProps
+      .positionedTracks
+      .filter(x => x.track.type == 'horizontal-chromosome-labels')[0]
+
+    const chromInfoSource = 
+      chromosomeLabels && {
+        server: chromosomeLabels.track.server,
+        tilesetUid: chromosomeLabels.track.tilesetUid,
+      };
+
+    if (chromInfoSource)
+        dataConfig.chromInfoSource = chromInfoSource;
+
+    console.log('chromInfoSource:', chromInfoSource);
+
     switch (track.type) {
       case 'left-axis':
         return new LeftAxisTrack(this.svgElement);

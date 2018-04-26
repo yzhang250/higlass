@@ -56,9 +56,7 @@ class HorizontalChromosomeLabels extends PixiTrack {
 
     ChromosomeInfo(chromSizesPath, (newChromInfo) => {
       this.chromInfo = newChromInfo;
-
       this.searchField = new SearchField(this.chromInfo);
-
       this.texts = [];
 
       for (let i = 0; i < this.chromInfo.cumPositions.length; i++) {

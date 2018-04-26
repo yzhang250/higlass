@@ -60,7 +60,8 @@ export default class DataFetcher {
           },
           (error) => {
             finished({'error': error});
-          }
+          },
+          this.dataConfig.chromInfoSource || {}
         );
       }
     } else {
@@ -129,6 +130,7 @@ export default class DataFetcher {
           server: this.dataConfig.server,
           done: resolve,
           ids: tileIds.map(x => `${this.dataConfig.tilesetUid}.${x}`),
+          chromInfoSource: this.dataConfig.chromInfoSource,
         }));
       promise.then((returnedTiles) => {
         // console.log('tileIds:', tileIds);

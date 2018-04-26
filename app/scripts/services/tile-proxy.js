@@ -136,30 +136,55 @@ export function fetchMultiRequestTiles(req) {
   // We're converting the array of IDs into an object in order to filter out duplicated requests.
   // In case different instances request the same data it won't be loaded twice.
   for (const request of requests) {
-    if (!requestsByServer[request.server]) {
-      requestsByServer[request.server] = {};
+    let chromInfoSection = '';
+
+    if (request.chromInfoSource) {
+      const cis = request.chromInfoSource;
+
+      console.log('cis:', cis);
+
+      if (cis && cis.server && cis.server != request.server) {
+        chromInfoSection += `&cs=${cis.server}`;
+      }
+
+      if (cis && cis.tilesetUid) {
+        chromInfoSection += `&ci=${cis.tilesetUid}`;
+      }
+    }
+
+    console.log('request:', request, 'chromInfoSection:', chromInfoSection);
+    const serverChromId = request.server + "|" + chromInfoSection;
+
+    if (!requestsByServer[serverChromId]) {
+      requestsByServer[serverChromId] = {};
     }
     for (const id of request.ids) {
-      requestsByServer[request.server][id] = true;
+      requestsByServer[serverChromId][id] = {
+        server: request.server,
+        chromInfoSection,
+      }
     }
   }
 
-  const servers = Object.keys(requestsByServer);
+  const serverChromIds = Object.keys(requestsByServer);
 
-  for (const server of servers) {
-    const ids = Object.keys(requestsByServer[server]);
-    // console.log('ids:', ids);
+  for (const serverChromId of serverChromIds) {
+    const ids = Object.keys(requestsByServer[serverChromId]);
+    console.log('ids:', ids);
 
     // if we request too many tiles, then the URL can get too long and fail
     // so we'll break up the requests into smaller subsets
     for (let i = 0; i < ids.length; i += MAX_FETCH_TILES) {
+      const server = requestsByServer[serverChromId][ids[i]].server; 
+      const chromInfoSection = requestsByServer[serverChromId][ids[i]].chromInfoSection;
+
       const theseTileIds = ids.slice(i, i + Math.min(ids.length - i, MAX_FETCH_TILES));
 
       const renderParams = theseTileIds.map(x => `d=${x}`).join('&');
-      const outUrl = `${server}/tiles/?${renderParams}&s=${sessionId}`;
+      let outUrl = `${server}/tiles/?${renderParams}&s=${sessionId}${chromInfoSection}`;
+      console.log('outUrl:', outUrl);
 
       const p = new Promise(((resolve, reject) => {
-        pubSub.publish('requestSent', outUrl);
         const params = {}
 
         params.outUrl = outUrl;
@@ -402,26 +427,37 @@ export const calculateTilesFromResolution = (resolution, scale, minX, maxX, pixe
  * @param {func} doneCb: A callback that gets called when the data is retrieved
  * @param {func} errorCb: A callback that gets called when there is an error
  */
-export const trackInfo = (server, tilesetUid, doneCb, errorCb) => {
-  const url =
+export const trackInfo = (server, tilesetUid, doneCb, errorCb, options={}) => {
+  let url =
     `${tts(server)}/tileset_info/?d=${tilesetUid}&s=${sessionId}`;
-    pubSub.publish('requestSent', url);
-    json(url, (error, data) => {
-      pubSub.publish('requestReceived', url);
-      if (error) {
-        // console.log('error:', error);
-        // don't do anything
-        // no tileset info just means we can't do anything with this file...
-        if (errorCb) {
-          errorCb(`Error retrieving tilesetInfo from: ${server}`);
-        }  else {
-          console.warn("Error retrieving: ", url);
-        }
-      } else {
-        // console.log('got data', data);
-        doneCb(data);
+
+  // add chromosome info server
+  if (options.server && options.server != server) {
+    url += `&cs=${server}`;
+  }
+
+  // add chromosome info uuid
+  if (options && options.tilesetUid) {
+    url += `&ci=${options.tilesetUid}`;
+  }
+
+  pubSub.publish('requestSent', url);
+  json(url, (error, data) => {
+    pubSub.publish('requestReceived', url);
+    if (error) {
+      // console.log('error:', error);
+      // don't do anything
+      // no tileset info just means we can't do anything with this file...
+      if (errorCb) {
+        errorCb(`Error retrieving tilesetInfo from: ${server}`);
+      }  else {
+        console.warn("Error retrieving: ", url);
       }
-    });
+    } else {
+      // console.log('got data', data);
+      doneCb(data);
+    }
+  });
 };
 
 /**
