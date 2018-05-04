@@ -1143,10 +1143,19 @@ class HeatmapTiledPixiTrack extends TiledPixiTrack {
     return tiles;
   }
 
-  calculateVisibleTiles(mirrorTiles = true) {
+  calculateVisibleTiles() {
     // if we don't know anything about this dataset, no point
     // in trying to get tiles
     if (!this.tilesetInfo) { return; }
+
+    let mirrorTiles = null;
+
+    if (this.tilesetInfo.max_pos[0] != this.tilesetInfo.max_pos[1])
+      mirrorTiles = false;
+    else
+      mirrorTiles = true;
+
+    console.log('mirrorTiles:', mirrorTiles);
 
     this.zoomLevel = this.calculateZoomLevel();
 
