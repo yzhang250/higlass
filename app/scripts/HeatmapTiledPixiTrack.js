@@ -217,6 +217,7 @@ class HeatmapTiledPixiTrack extends TiledPixiTrack {
     const {
       tileX, tileY, tileWidth, tileHeight
     } = this.getTilePosAndDimensions(zoomLevel, tilePos);
+    console.log('tileX:', tileX, tileY, tileWidth, tileHeight);
 
     const dim = {};
 
@@ -789,6 +790,8 @@ class HeatmapTiledPixiTrack extends TiledPixiTrack {
 
     // BP resolution of a tile's bin (i.e., numbe of base pairs per bin / pixel)
     const tileRes = tileWidth / BINS_PER_TILE;
+    // console.log('tileWidth:', tileWidth);
+    return [];
 
     // the data domain of the currently visible region
     const xDomain = [this._xScale.invert(x), this._xScale.invert(x + width)]
@@ -1168,10 +1171,11 @@ class HeatmapTiledPixiTrack extends TiledPixiTrack {
         this.tilesetInfo.min_pos[1],
         this.tilesetInfo.max_pos[1],
         this.tilesetInfo.max_zoom,
-        this.tilesetInfo.max_width
+        this.tilesetInfo.max_width1 || this.tilesetInfo.max_width
       );
     }
 
+    console.log('this.xTiles:', this.xTiles, this.yTiles);
     this.setVisibleTiles(
       this.tilesToId(this.xTiles, this.yTiles, this.zoomLevel, this.mirrorTiles())
     );
@@ -1216,6 +1220,7 @@ class HeatmapTiledPixiTrack extends TiledPixiTrack {
       positionText += '<br/>';
     }
 
+    console.log('getMouseOverHtml:');
     let data = null;
     try {
       data = this.getVisibleRectangleData(trackX, trackY, 1, 1).flatten().tolist();

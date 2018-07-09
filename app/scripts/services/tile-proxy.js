@@ -358,7 +358,6 @@ export const calculateTiles = (
   // be calculated according to cumulative width
 
   const tileWidth = maxDim / (2 ** zoomLevelFinal);
-
   const epsilon = 0.0000001;
 
   return range(
