@@ -1165,6 +1165,7 @@ class HeatmapTiledPixiTrack extends TiledPixiTrack {
         this.tilesetInfo.max_width
       );
 
+      console.log('ytiles');
       this.yTiles = tileProxy.calculateTiles(
         this.zoomLevel,
         this._yScale,
