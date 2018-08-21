@@ -1,7 +1,7 @@
 import Tiled1DPixiTrack from './Tiled1DPixiTrack';
 import AxisPixi from './AxisPixi';
 
-import { tileProxy } from './services';
+import { pubSub, tileProxy } from './services';
 import { showMousePosition } from './utils';
 
 class HorizontalTiled1DPixiTrack extends Tiled1DPixiTrack {
@@ -12,6 +12,7 @@ class HorizontalTiled1DPixiTrack extends Tiled1DPixiTrack {
     options,
     animate,
     onValueScaleChanged,
+    onMouseMoveZoom,
   ) {
     super(
       scene,
@@ -19,7 +20,8 @@ class HorizontalTiled1DPixiTrack extends Tiled1DPixiTrack {
       handleTilesetInfoReceived,
       options,
       animate,
-      onValueScaleChanged
+      onValueScaleChanged,
+      onMouseMoveZoom,
     );
 
     this.axis = new AxisPixi(this);
@@ -27,12 +29,56 @@ class HorizontalTiled1DPixiTrack extends Tiled1DPixiTrack {
 
     this.animate = animate;
     this.options = options;
+    this.onMouseMoveZoom = onMouseMoveZoom;
 
     this.pubSubs = [];
 
     if (this.options.showMousePosition && !this.hideMousePosition) {
       this.hideMousePosition = showMousePosition(this, this.is2d);
     }
+
+    if (this.onMouseMoveZoom) {
+      this.pubSubs.push(
+        pubSub.subscribe('app.mouseMove', this.mouseMoveHandler.bind(this))
+      );
+    }
+  }
+
+  /**
+   * Mouse move handler
+   *
+   * @param  {Object}  e  Event object.
+   */
+  mouseMoveHandler(e) {
+    if (!this.isWithin(e.x, e.y)) return;
+
+    this.mouseX = e.x;
+
+    this.mouseMoveZoomHandler();
+  }
+
+  /**
+   * Mouse move and zoom handler. Is triggered on both events.
+   *
+   * @param  {Number}  x  Relative X coordinate.
+   */
+  mouseMoveZoomHandler(x = this.mouseX) {
+    if (typeof x === 'undefined') return;
+
+    const relX = x - this.position[0];
+
+    const center = [
+      Math.round(this._xScale.invert(relX)),
+      null
+    ];
+
+    this.onMouseMoveZoom({ center });
+  }
+
+  zoomed(newXScale, newYScale) {
+    super.zoomed(newXScale, newYScale);
+
+    this.mouseMoveZoomHandler();
   }
 
   rerender(options, force) {
@@ -55,7 +101,7 @@ class HorizontalTiled1DPixiTrack extends Tiled1DPixiTrack {
     }
   }
 
-calculateZoomLevel() {
+  calculateZoomLevel() {
     // offset by 2 because 1D tiles are more dense than 2D tiles
     // 1024 points per tile vs 256 for 2D tiles
     if (this.tilesetInfo.resolutions) {
@@ -67,8 +113,8 @@ calculateZoomLevel() {
       return zoomIndexX;
     }
 
-  // the tileProxy calculateZoomLevel function only cares about the
-  // difference between the minimum and maximum position
+    // the tileProxy calculateZoomLevel function only cares about the
+    // difference between the minimum and maximum position
     const xZoomLevel = tileProxy.calculateZoomLevel(this._xScale,
       this.tilesetInfo.min_pos[0],
       this.tilesetInfo.max_pos[0],
@@ -77,8 +123,6 @@ calculateZoomLevel() {
 
     let zoomLevel = Math.min(xZoomLevel, this.maxZoom);
     zoomLevel = Math.max(zoomLevel, 0);
-  //console.log('xScale', this._xScale.domain(), this.maxZoom);
-  //console.log('zoomLevel:', zoomLevel, this.tilesetInfo.min_pos[0], this.tilesetInfo.max_pos[0]);
 
     return zoomLevel;
   }

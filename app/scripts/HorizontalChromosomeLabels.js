@@ -6,6 +6,8 @@ import PixiTrack from './PixiTrack';
 import ChromosomeInfo from './ChromosomeInfo';
 import SearchField from './SearchField';
 
+import { pubSub } from './services';
+
 import {
   absToChr,
   colorToHex,
@@ -26,7 +28,8 @@ class HorizontalChromosomeLabels extends PixiTrack {
     handleTilesetInfoReceived,
     options,
     animate,
-    chromInfoPath
+    chromInfoPath,
+    onMouseMoveZoom,
   ) {
     super(scene, options);
 
@@ -78,6 +81,13 @@ class HorizontalChromosomeLabels extends PixiTrack {
       chromSizesPath = `${dataConfig.server}/chrom-sizes/?id=${dataConfig.tilesetUid}`;
     }
 
+    this.onMouseMoveZoom = onMouseMoveZoom;
+    if (this.onMouseMoveZoom) {
+      this.pubSubs.push(
+        pubSub.subscribe('app.mouseMove', this.mouseMoveHandler.bind(this))
+      );
+    }
+
     ChromosomeInfo(chromSizesPath, (newChromInfo) => {
       this.chromInfo = newChromInfo;
 
@@ -90,6 +100,38 @@ class HorizontalChromosomeLabels extends PixiTrack {
       this.draw();
       this.animate();
     });
+  }
+
+
+  /**
+   * Mouse move handler
+   *
+   * @param  {Object}  e  Event object.
+   */
+  mouseMoveHandler(e) {
+    if (!this.isWithin(e.x, e.y)) return;
+
+    this.mouseX = e.x;
+
+    this.mouseMoveZoomHandler();
+  }
+
+  /**
+   * Mouse move and zoom handler. Is triggered on both events.
+   *
+   * @param  {Number}  x  Relative X coordinate.
+   */
+  mouseMoveZoomHandler(x = this.mouseX) {
+    if (typeof x === 'undefined') return;
+
+    const relX = x - this.position[0];
+
+    const center = [
+      Math.round(this._xScale.invert(relX)),
+      null
+    ];
+
+    this.onMouseMoveZoom({ center });
   }
 
   drawChromLabels() {
@@ -359,6 +401,7 @@ class HorizontalChromosomeLabels extends PixiTrack {
     this.yScale(newYScale);
 
     this.draw();
+    this.mouseMoveZoomHandler();
   }
 
   refreshTiles() {
