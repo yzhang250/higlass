@@ -15,6 +15,7 @@ class Horizontal1dHeatmapTrack extends HorizontalLine1DPixiTrack {
     options = {},
     animate,
     onValueScaleChanged,
+    onMouseMoveZoom,
   ) {
     super(
       scene,
@@ -22,7 +23,8 @@ class Horizontal1dHeatmapTrack extends HorizontalLine1DPixiTrack {
       handleTilesetInfoReceived,
       options,
       animate,
-      onValueScaleChanged
+      onValueScaleChanged,
+      onMouseMoveZoom,
     );
 
     this.setColorScale(options.colorRange);

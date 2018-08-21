@@ -1322,6 +1322,7 @@ class TrackRenderer extends React.Component {
           track.options,
           () => this.currentProps.onNewTilesLoaded(track.uid),
           () => this.currentProps.onValueScaleChanged(track.uid),
+          this.props.onMouseMoveZoom,
         );
 
       case 'vertical-bar':
@@ -1332,6 +1333,7 @@ class TrackRenderer extends React.Component {
           track.options,
           () => this.currentProps.onNewTilesLoaded(track.uid),
           () => this.currentProps.onValueScaleChanged(track.uid),
+          this.props.onMouseMoveZoom,
         ));
 
       case 'horizontal-divergent-bar':
@@ -1363,6 +1365,7 @@ class TrackRenderer extends React.Component {
           handleTilesetInfoReceived,
           track.options,
           () => this.currentProps.onNewTilesLoaded(track.uid),
+          this.props.onMouseMoveZoom,
         );
 
       case 'vertical-1d-tiles':
@@ -1372,6 +1375,7 @@ class TrackRenderer extends React.Component {
           handleTilesetInfoReceived,
           track.options,
           () => this.currentProps.onNewTilesLoaded(track.uid),
+          this.props.onMouseMoveZoom,
         );
 
       case '2d-tiles':
@@ -1463,6 +1467,7 @@ class TrackRenderer extends React.Component {
           handleTilesetInfoReceived,
           track.options,
           () => this.currentProps.onNewTilesLoaded(track.uid),
+          this.props.onMouseMoveZoom,
         );
 
       case 'vertical-gene-annotations':
@@ -1473,6 +1478,7 @@ class TrackRenderer extends React.Component {
             handleTilesetInfoReceived,
             track.options,
             () => this.currentProps.onNewTilesLoaded(track.uid),
+            this.props.onMouseMoveZoom,
           ),
         );
 
@@ -1490,6 +1496,8 @@ class TrackRenderer extends React.Component {
         return new Annotations1dTrack(
           this.pStage,
           track.options,
+          false,
+          this.props.onMouseMoveZoom,
         );
 
       case 'vertical-1d-annotations':
@@ -1572,6 +1580,7 @@ class TrackRenderer extends React.Component {
           track.options,
           () => this.currentProps.onNewTilesLoaded(track.uid),
           track.chromInfoPath,
+          this.props.onMouseMoveZoom,
         );
 
       case 'vertical-chromosome-labels':
@@ -1585,6 +1594,7 @@ class TrackRenderer extends React.Component {
             track.options,
             () => this.currentProps.onNewTilesLoaded(track.uid),
             track.chromInfoPath,
+            this.props.onMouseMoveZoom,
           ),
         );
       case 'horizontal-heatmap':

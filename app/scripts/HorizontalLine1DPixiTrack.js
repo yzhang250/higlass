@@ -14,6 +14,7 @@ class HorizontalLine1DPixiTrack extends HorizontalTiled1DPixiTrack {
     option,
     animate,
     onValueScaleChanged,
+    onMouseMoveZoom,
   ) {
     super(
       scene,
@@ -24,7 +25,8 @@ class HorizontalLine1DPixiTrack extends HorizontalTiled1DPixiTrack {
       () => {
         this.drawAxis(this.valueScale);
         onValueScaleChanged();
-      }
+      },
+      onMouseMoveZoom
     );
   }
 
