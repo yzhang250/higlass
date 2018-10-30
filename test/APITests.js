@@ -31,7 +31,7 @@ function createElementAndAPI(viewConfig, options) {
   div.setAttribute('style', 'width:600px; height: 400px; background-color: lightgreen');
 
   const api = viewer(div, viewConfig, options);
-
+ 
   return [div, api];
 }
 
@@ -129,6 +129,26 @@ describe('Simple HiGlassComponent', () => {
       document.body.removeChild(div);
     });
     
+    it('zooms to a negative location', () => {
+      const [div, api] = createElementAndAPI(simpleCenterViewConfig,
+        { editable: false, bounded: true });
+
+      // const component = api.getComponent();
+      const viewconf = api.getViewConfig();
+
+      console.log('viewconf.initialXDomain', api.getComponent().xScales.a.domain());
+      api.zoomTo('a', -10000000, 10000000);
+
+      waitForTransitionsFinished(api.getComponent(), () => {
+        waitForTilesLoaded(api.getComponent() , () => {
+          console.log('viewconf.initialXDomain', api.getViewConfig());          
+        })
+      });
+
+      // console.log('viewHeaders:', component.viewHeaders);
+      // expect(Object.keys(component.viewHeaders).length).to.eql(0);
+      // document.body.removeChild(div);
+    });
     // it('creates a new component with different options and checks'
     //   + 'whether the global options object of the first object has changed', () => {
     //   // create one div and set an auth header
