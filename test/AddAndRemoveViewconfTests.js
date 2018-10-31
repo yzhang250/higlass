@@ -8,6 +8,11 @@ import Adapter from 'enzyme-adapter-react-16';
 
 import { expect } from 'chai';
 
+// Utils
+import {
+  removeHGComponent,
+} from '../app/scripts/utils';
+
 import {
   simpleCenterViewConfig,
 } from './view-configs';
@@ -22,7 +27,7 @@ describe('Simple HiGlassComponent', () => {
   let div = null;
   let api = null;
 
-  describe('API tests', () => {
+  describe('Add and remove viewconf tests', () => {
     beforeAll((done) => {
       div = global.document.createElement('div');
       global.document.body.appendChild(div);
@@ -55,7 +60,7 @@ describe('Simple HiGlassComponent', () => {
     });
 
     afterAll((done) => {
-      document.body.removeChild(div);
+      removeHGComponent(div);
 
       done();
     });

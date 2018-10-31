@@ -7,6 +7,7 @@ import {
 import Adapter from 'enzyme-adapter-react-16';
 
 import { expect } from 'chai';
+import ReactDOM from 'react-dom';
 
 // Utils
 import {
@@ -56,7 +57,8 @@ describe('Simple HiGlassComponent', () => {
       // console.log('viewHeaders:', component.viewHeaders);
       // expect(Object.keys(component.viewHeaders).length).to.be.above(0);
 
-      //document.body.removeChild(div);
+      ReactDOM.unmountComponentAtNode(div);
+      document.body.removeChild(div);
     });
     
     // it('creates a new component with different options and checks'

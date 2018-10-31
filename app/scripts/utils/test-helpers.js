@@ -3,6 +3,7 @@ import {
 } from 'enzyme';
 
 import { requestsInFlight } from '../services';
+import ReactDOM from 'react-dom';
 
 import {
   getTrackObjectFromHGC,
@@ -195,3 +196,11 @@ export const mountHGComponent = (prevDiv, prevHgc, viewConf, done, options) => {
 
   return [div, hgc];
 };
+
+/**
+ * Unmount the higlass component and remove its div
+ */
+export const removeHGComponent = (div) => {
+  ReactDOM.unmountComponentAtNode(div);
+  document.body.removeChild(div);
+}
