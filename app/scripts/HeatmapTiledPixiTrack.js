@@ -248,6 +248,11 @@ class HeatmapTiledPixiTrack extends TiledPixiTrack {
     this.valueScale = valueScale;
     this.limitedValueScale = this.valueScale.copy();
 
+    if (isNaN(this.limitedValueScale.domain()[0])
+      && isNaN(this.limitedValueScale.domain()[1])) {
+      this.limitedValueScale.domain([0, 1]);
+    }
+
     if (
       this.options
       && typeof this.options.scaleStartPercent !== 'undefined'
