@@ -414,14 +414,24 @@ class PixiTrack extends Track {
       || (this.options.labelPosition === 'topRight' && this.flipText)
     ) {
       this.labelText.x = this.position[0] + (labelLeftMargin || labelTopMargin);
-      this.labelText.y = this.position[1] + this.dimensions[1] - (labelBottomMargin || labelRightMargin);
+      this.labelText.y = (
+        this.position[1]
+        + this.dimensions[1]
+        - (labelBottomMargin || labelRightMargin)
+      );
       this.labelText.anchor.x = 0.5;
       this.labelText.anchor.y = 1;
 
       this.labelText.x += this.labelText.width / 2;
       graphics.drawRect(
         this.position[0] + (labelLeftMargin || labelTopMargin),
-        this.position[1] + this.dimensions[1] - this.labelText.height - labelBackgroundMargin - (labelBottomMargin || labelRightMargin),
+        (
+          this.position[1]
+          + this.dimensions[1]
+          - this.labelText.height
+          - labelBackgroundMargin
+          - (labelBottomMargin || labelRightMargin)
+        ),
         this.labelText.width + labelBackgroundMargin,
         this.labelText.height + labelBackgroundMargin
       );
@@ -429,7 +439,11 @@ class PixiTrack extends Track {
       (this.options.labelPosition === 'topRight' && !this.flipText)
       || (this.options.labelPosition === 'bottomLeft' && this.flipText)
     ) {
-      this.labelText.x = this.position[0] + this.dimensions[0] - (labelRightMargin || labelBottomMargin);
+      this.labelText.x = (
+        this.position[0]
+        + this.dimensions[0]
+        - (labelRightMargin || labelBottomMargin)
+      );
       this.labelText.y = this.position[1] + (labelTopMargin || labelLeftMargin);
       this.labelText.anchor.x = 0.5;
       this.labelText.anchor.y = 0;
@@ -437,7 +451,13 @@ class PixiTrack extends Track {
       this.labelText.x -= this.labelText.width / 2;
 
       graphics.drawRect(
-        this.position[0] + this.dimensions[0] - this.labelText.width - labelBackgroundMargin - (labelRightMargin || labelBottomMargin),
+        (
+          this.position[0]
+          + this.dimensions[0]
+          - this.labelText.width
+          - labelBackgroundMargin
+          - (labelRightMargin || labelBottomMargin)
+        ),
         this.position[1] + (labelTopMargin || labelLeftMargin),
         this.labelText.width + labelBackgroundMargin,
         this.labelText.height + labelBackgroundMargin
@@ -453,8 +473,20 @@ class PixiTrack extends Track {
       this.labelText.x -= this.labelText.width / 2;
 
       graphics.drawRect(
-        this.position[0] + this.dimensions[0] - this.labelText.width - labelBackgroundMargin - labelRightMargin,
-        this.position[1] + this.dimensions[1] - this.labelText.height - labelBackgroundMargin - labelBottomMargin,
+        (
+          this.position[0]
+          + this.dimensions[0]
+          - this.labelText.width
+          - labelBackgroundMargin
+          - labelRightMargin
+        ),
+        (
+          this.position[1]
+          + this.dimensions[1]
+          - this.labelText.height
+          - labelBackgroundMargin
+          - labelBottomMargin
+        ),
         this.labelText.width + labelBackgroundMargin,
         this.labelText.height + labelBackgroundMargin,
       );
@@ -492,8 +524,8 @@ class PixiTrack extends Track {
 
       this.labelText.y += this.labelText.height / 2 + 3;
     } else if (
-      (this.options.labelPosition == 'outerRight' && !this.flipText)
-      || (this.options.labelPosition == 'outerBottom' && this.flipText)
+      (this.options.labelPosition === 'outerRight' && !this.flipText)
+      || (this.options.labelPosition === 'outerBottom' && this.flipText)
     ) {
       this.labelText.x = this.position[0] + this.dimensions[0];
       this.labelText.y = this.position[1] + this.dimensions[1] / 2;
@@ -507,10 +539,10 @@ class PixiTrack extends Track {
     }
 
     if (
-      this.options.labelPosition == 'outerLeft'
-      || this.options.labelPosition == 'outerRight'
-      || this.options.labelPosition == 'outerTop'
-      || this.options.labelPosition == 'outerBottom'
+      this.options.labelPosition === 'outerLeft'
+      || this.options.labelPosition === 'outerRight'
+      || this.options.labelPosition === 'outerTop'
+      || this.options.labelPosition === 'outerBottom'
     ) {
       this.pLabel.setParent(this.pBase);
     } else {
