@@ -1,6 +1,7 @@
 ## v1.4.0
 
 - Add new public event `cursorLocation`. See [`docs/examples/apis/cursor-location.html`](docs/examples/apis/cursor-location.html) for an example.
+- Added ability to define label margins
 
 ## v1.3.0
 

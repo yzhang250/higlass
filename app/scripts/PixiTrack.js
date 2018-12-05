@@ -288,7 +288,12 @@ class PixiTrack extends Track {
     const hexColor = colorToHex(color);
     graphics.beginFill(hexColor, opacity);
 
-    graphics.drawRect(this.position[0], this.position[1], this.dimensions[0], this.dimensions[1]);
+    graphics.drawRect(
+      this.position[0],
+      this.position[1],
+      this.dimensions[0],
+      this.dimensions[1]
+    );
   }
 
   drawLabel() {
@@ -309,7 +314,7 @@ class PixiTrack extends Track {
       +this.options.labelBackgroundOpacity || 0.5
     );
 
-    const stroke = colorToHex(this.options.labelColor || 'black');
+    const fontColor = colorToHex(this.options.labelColor || 'black');
     const labelBackgroundMargin = 2;
 
     // we can't draw a label if there's no space
@@ -374,7 +379,7 @@ class PixiTrack extends Track {
     this.labelText.style = {
       fontSize: `${this.labelTextFontSize}px`,
       fontFamily: this.labelTextFontFamily,
-      fill: stroke,
+      fill: fontColor,
     };
     this.labelText.alpha = typeof this.options.labelTextOpacity !== 'undefined'
       ? this.options.labelTextOpacity
@@ -384,49 +389,62 @@ class PixiTrack extends Track {
 
     if (this.flipText) { this.labelText.scale.x = -1; }
 
+    const labelLeftMargin = +this.options.labelLeftMargin || 0;
+    const labelRightMargin = +this.options.labelRightMargin || 0;
+    const labelTopMargin = +this.options.labelTopMargin || 0;
+    const labelBottomMargin = +this.options.labelBottomMargin || 0;
+
     if (this.options.labelPosition === 'topLeft') {
-      this.labelText.x = this.position[0];
-      this.labelText.y = this.position[1];
+      this.labelText.x = this.position[0] + labelLeftMargin;
+      this.labelText.y = this.position[1] + labelTopMargin;
 
       this.labelText.anchor.x = 0.5;
       this.labelText.anchor.y = 0;
 
       this.labelText.x += this.labelText.width / 2;
 
-      graphics.drawRect(this.position[0],
-        this.position[1],
+      graphics.drawRect(
+        this.position[0] + labelLeftMargin,
+        this.position[1] + labelTopMargin,
         this.labelText.width + labelBackgroundMargin,
-        this.labelText.height + labelBackgroundMargin);
-    } else if ((this.options.labelPosition === 'bottomLeft' && !this.flipText)
-                   || (this.options.labelPosition === 'topRight' && this.flipText)) {
-      this.labelText.x = this.position[0];
-      this.labelText.y = this.position[1] + this.dimensions[1];
+        this.labelText.height + labelBackgroundMargin
+      );
+    } else if (
+      (this.options.labelPosition === 'bottomLeft' && !this.flipText)
+      || (this.options.labelPosition === 'topRight' && this.flipText)
+    ) {
+      this.labelText.x = this.position[0] + (labelLeftMargin || labelTopMargin);
+      this.labelText.y = this.position[1] + this.dimensions[1] - (labelBottomMargin || labelRightMargin);
       this.labelText.anchor.x = 0.5;
       this.labelText.anchor.y = 1;
 
       this.labelText.x += this.labelText.width / 2;
-      graphics.drawRect(this.position[0],
-        this.position[1] + this.dimensions[1] - this.labelText.height - labelBackgroundMargin,
+      graphics.drawRect(
+        this.position[0] + (labelLeftMargin || labelTopMargin),
+        this.position[1] + this.dimensions[1] - this.labelText.height - labelBackgroundMargin - (labelBottomMargin || labelRightMargin),
         this.labelText.width + labelBackgroundMargin,
-        this.labelText.height + labelBackgroundMargin);
-    } else if ((this.options.labelPosition === 'topRight' && !this.flipText)
-                   || (this.options.labelPosition === 'bottomLeft' && this.flipText)) {
-      this.labelText.x = this.position[0] + this.dimensions[0];
-      this.labelText.y = this.position[1];
+        this.labelText.height + labelBackgroundMargin
+      );
+    } else if (
+      (this.options.labelPosition === 'topRight' && !this.flipText)
+      || (this.options.labelPosition === 'bottomLeft' && this.flipText)
+    ) {
+      this.labelText.x = this.position[0] + this.dimensions[0] - (labelRightMargin || labelBottomMargin);
+      this.labelText.y = this.position[1] + (labelTopMargin || labelLeftMargin);
       this.labelText.anchor.x = 0.5;
       this.labelText.anchor.y = 0;
 
       this.labelText.x -= this.labelText.width / 2;
 
       graphics.drawRect(
-        this.position[0] + this.dimensions[0] - this.labelText.width - labelBackgroundMargin,
-        this.position[1],
+        this.position[0] + this.dimensions[0] - this.labelText.width - labelBackgroundMargin - (labelRightMargin || labelBottomMargin),
+        this.position[1] + (labelTopMargin || labelLeftMargin),
         this.labelText.width + labelBackgroundMargin,
         this.labelText.height + labelBackgroundMargin
       );
     } else if (this.options.labelPosition === 'bottomRight') {
-      this.labelText.x = this.position[0] + this.dimensions[0];
-      this.labelText.y = this.position[1] + this.dimensions[1];
+      this.labelText.x = this.position[0] + this.dimensions[0] - labelRightMargin;
+      this.labelText.y = this.position[1] + this.dimensions[1] - labelBottomMargin;
       this.labelText.anchor.x = 0.5;
       this.labelText.anchor.y = 1;
 
@@ -435,13 +453,15 @@ class PixiTrack extends Track {
       this.labelText.x -= this.labelText.width / 2;
 
       graphics.drawRect(
-        this.position[0] + this.dimensions[0] - this.labelText.width - labelBackgroundMargin,
-        this.position[1] + this.dimensions[1] - this.labelText.height - labelBackgroundMargin,
+        this.position[0] + this.dimensions[0] - this.labelText.width - labelBackgroundMargin - labelRightMargin,
+        this.position[1] + this.dimensions[1] - this.labelText.height - labelBackgroundMargin - labelBottomMargin,
         this.labelText.width + labelBackgroundMargin,
         this.labelText.height + labelBackgroundMargin,
       );
-    } else if ((this.options.labelPosition === 'outerLeft' && !this.flipText)
-                   || (this.options.labelPosition === 'outerTop' && this.flipText)) {
+    } else if (
+      (this.options.labelPosition === 'outerLeft' && !this.flipText)
+      || (this.options.labelPosition === 'outerTop' && this.flipText)
+    ) {
       this.labelText.x = this.position[0];
       this.labelText.y = this.position[1] + this.dimensions[1] / 2;
 
@@ -449,8 +469,10 @@ class PixiTrack extends Track {
       this.labelText.anchor.y = 0.5;
 
       this.labelText.x -= this.labelText.width / 2 + 3;
-    } else if ((this.options.labelPosition === 'outerTop' && !this.flipText)
-                   || (this.options.labelPosition === 'outerLeft' && this.flipText)) {
+    } else if (
+      (this.options.labelPosition === 'outerTop' && !this.flipText)
+      || (this.options.labelPosition === 'outerLeft' && this.flipText)
+    ) {
       this.labelText.x = this.position[0] + this.dimensions[0] / 2;
       this.labelText.y = this.position[1];
 
@@ -458,8 +480,10 @@ class PixiTrack extends Track {
       this.labelText.anchor.y = 0.5;
 
       this.labelText.y -= this.labelText.height / 2 + 3;
-    } else if ((this.options.labelPosition === 'outerBottom' && !this.flipText)
-                   || (this.options.labelPosition === 'outerRight' && this.flipText)) {
+    } else if (
+      (this.options.labelPosition === 'outerBottom' && !this.flipText)
+      || (this.options.labelPosition === 'outerRight' && this.flipText)
+    ) {
       this.labelText.x = this.position[0] + this.dimensions[0] / 2;
       this.labelText.y = this.position[1] + this.dimensions[1];
 
@@ -467,8 +491,10 @@ class PixiTrack extends Track {
       this.labelText.anchor.y = 0.5;
 
       this.labelText.y += this.labelText.height / 2 + 3;
-    } else if ((this.options.labelPosition === 'outerRight' && !this.flipText)
-                   || (this.options.labelPosition === 'outerBottom' && this.flipText)) {
+    } else if (
+      (this.options.labelPosition == 'outerRight' && !this.flipText)
+      || (this.options.labelPosition == 'outerBottom' && this.flipText)
+    ) {
       this.labelText.x = this.position[0] + this.dimensions[0];
       this.labelText.y = this.position[1] + this.dimensions[1] / 2;
 
@@ -480,10 +506,12 @@ class PixiTrack extends Track {
       this.labelText.visible = false;
     }
 
-    if (this.options.labelPosition === 'outerLeft'
-            || this.options.labelPosition === 'outerRight'
-            || this.options.labelPosition === 'outerTop'
-            || this.options.labelPosition === 'outerBottom') {
+    if (
+      this.options.labelPosition == 'outerLeft'
+      || this.options.labelPosition == 'outerRight'
+      || this.options.labelPosition == 'outerTop'
+      || this.options.labelPosition == 'outerBottom'
+    ) {
       this.pLabel.setParent(this.pBase);
     } else {
       this.pLabel.setParent(this.pMasked);
@@ -492,6 +520,7 @@ class PixiTrack extends Track {
 
   rerender(options) {
     this.options = options;
+
     this.draw();
     this.drawBackground();
     this.drawLabel();
