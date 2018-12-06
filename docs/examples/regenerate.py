@@ -5,13 +5,15 @@ import json
 import os
 import re
 import requests
+import subprocess
 
 def main():
-    parser = argparse.ArgumentParser(description='Regenerates example list HTML')
+    parser = argparse.ArgumentParser(description='Regenerates example list HTML and/or take screenshots')
     parser.add_argument('--stdout', action='store_true', help='Dump HTML to STDOUT')
     parser.add_argument('--local', action='store_true', help='Do not make HTTP requests')
+    parser.add_argument('--screenshots', action='store_true', help='Take screenshots of every example')
     args = parser.parse_args()
-    if not args.stdout:
+    if not (args.stdout or args.screenshots):
         parser.print_help()
     else:
         dir = os.path.dirname(os.path.realpath(__file__))
@@ -20,9 +22,26 @@ def main():
         local_vc_list = get_local_vc_list(dir)
         remote_vc_list = get_remote_vc_list(args.local)
         
+        if args.screenshots:
+            screenshots([vc['href'] for vc in local_vc_list + remote_vc_list])
+        
         all_track_types = tracktypes_from_vc_list(local_vc_list + remote_vc_list)
 
         print(template(api_html, all_track_types, local_vc_list, remote_vc_list))
+
+def screenshots(hrefs):
+    for href in hrefs:
+        filename = re.sub(r'.*[/=]', '', href)
+        subprocess.run([
+                '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+                '--headless', '--disable-gpu', '--hide-scrollbars',
+                '--screenshot=/tmp/screenshots/{}.png'.format(filename),
+                '--virtual-time-budget=2000',
+                '--window-size=500,1000',
+                'http://localhost:8080/apis/svg.html?' + href
+            ],
+            check=True
+        )
 
 def get_api_html(dir):
     api_examples = os.listdir(os.path.join(dir, 'apis'))
@@ -34,7 +53,7 @@ def get_local_vc_list(dir):
     for filename in local_vc_files:
         with open(os.path.join(dir, 'viewconfs', filename)) as f:
             local_vc_list.append({
-                'href': 'apis/svg.html?/viewconfs/{}'.format(filename),
+                'href': '/viewconfs/{}'.format(filename),
                 'title': filename,
                 'viewconf': f.read()
             })
@@ -47,9 +66,10 @@ def get_remote_vc_list(skip):
     remote_vc_examples = requests.get(gist_url).json()
     remote_vc_list = []
     for example in remote_vc_examples:
-        viewconf = requests.get(example['url'].replace('/app/?config=', '/api/v1/viewconfs/?d=')).text
+        url = example['url'].replace('/app/?config=', '/api/v1/viewconfs/?d=')
+        viewconf = requests.get(url).text
         remote_vc_list.append({
-            'href': example['url'],
+            'href': url,
             'title': example['title'],
             'viewconf': viewconf
         })
@@ -112,7 +132,7 @@ def tracktypes_header_html(tracktypes):
 
 def list_to_html(vc_list, all_track_types):
     return '\n'.join([
-        '<tr><td><a href="{}">{}</a></td>{}</tr>'.format(
+        '<tr><td><a href="apis/svg.html?{}">{}</a></td>{}</tr>'.format(
           info['href'], info['title'],
           ''.join(['<td>{}</td>'.format('X' if t in track_types(info['viewconf']) else '') for t in all_track_types])
         )
