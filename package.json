@@ -4,6 +4,7 @@
   "description": "HiGlass Hi-C / genomic / large data viewer",
   "author": "Peter Kerpedjiev <pkerpedjiev@gmail.com>",
   "main": "dist/hglib.js",
+  "module": "app/scripts/hglib.js"
   "unpkg": "dist/hglib.min.js",
   "jsdelivr": "dist/hglib.min.js",
   "files": [
