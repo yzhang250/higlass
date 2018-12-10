@@ -1059,7 +1059,7 @@ class HiGlassComponent extends React.Component {
 
         if (!this.xScales[key] || !this.yScales[key]) { continue; }
 
-        if (key == uid) {// no need to notify oneself that the scales have changed
+        if (key === uid) {// no need to notify oneself that the scales have changed
           continue;
         }
 
@@ -1841,7 +1841,7 @@ class HiGlassComponent extends React.Component {
         leftWidth, rightWidth,
         centerWidth, centerHeight } = this.calculateViewDimensions(view);
 
-      // console.log('totalWidth:', totalWidth, totalHeight, leftWidth, rightWidth, centerWidth, centerHeight);
+      // console.log(totalWidth, totalHeight, leftWidth, rightWidth, centerWidth, centerHeight);
 
       if (view.searchBox) { totalHeight += 30; }
 
@@ -1862,7 +1862,7 @@ class HiGlassComponent extends React.Component {
 
       /*
         if ('center' in view.tracks || 'left' in view.tracks || 'right' in view.tracks) {
-            let desiredHeight = ((elementWidth - leftWidth - rightWidth - 2 * this.horizontalMargin) );
+            let desiredHeight = elementWidth - leftWidth - rightWidth - 2 * this.horizontalMargin;
             desiredHeight +=  topHeight + bottomHeight + 2*this.verticalMargin + 20;
 
             // how much height is left in the browser?
@@ -2353,7 +2353,8 @@ class HiGlassComponent extends React.Component {
     ) {
       const fromView = track.fromViewUid;
 
-      track.registerViewportChanged = (trackId, listener) => this.addScalesChangedListener(fromView, trackId, listener),
+      track.registerViewportChanged =
+       (trackId, listener) => this.addScalesChangedListener(fromView, trackId, listener),
       track.removeViewportChanged = trackId => this.removeScalesChangedListener(fromView, trackId),
       track.setDomainsCallback = (xDomain, yDomain) => {
         const tXScale = scaleLinear().domain(xDomain).range(this.xScales[fromView].range());
@@ -2371,13 +2372,16 @@ class HiGlassComponent extends React.Component {
         if (viewUid in this.zoomLocks) { zoomLocked = fromView in this.zoomLocks[viewUid]; }
         if (zoomLocked) { this.handleUnlock(viewUid, this.zoomLocks); }
 
-        if (viewUid in this.locationLocks) { locationLocked = fromView in this.locationLocks[viewUid]; }
+        if (viewUid in this.locationLocks) {
+          locationLocked = fromView in this.locationLocks[viewUid]; }
         if (locationLocked) { this.handleUnlock(viewUid, this.locationLocks); }
 
         this.handleScalesChanged(fromView, tXScale, tYScale, true);
 
-        if (zoomLocked) { this.addLock(viewUid, fromView, this.zoomLocks, this.viewScalesLockData); }
-        if (locationLocked) { this.addLock(viewUid, fromView, this.locationLocks, this.viewScalesLockData); }
+        if (zoomLocked) {
+          this.addLock(viewUid, fromView, this.zoomLocks, this.viewScalesLockData); }
+        if (locationLocked) {
+          this.addLock(viewUid, fromView, this.locationLocks, this.viewScalesLockData); }
       };
     }
   }
@@ -2843,8 +2847,8 @@ class HiGlassComponent extends React.Component {
 
     if (sortedAssemblyCounts.length) { selectedAssembly = sortedAssemblyCounts[0][0]; }
 
-    view.genomePositionSearchBox = this.createGenomePostionSearchBoxEntry(view.genomePositionSearchBox,
-      selectedAssembly);
+    view.genomePositionSearchBox =
+      this.createGenomePostionSearchBoxEntry(view.genomePositionSearchBox, selectedAssembly);
     view.genomePositionSearchBox.visible = !view.genomePositionSearchBox.visible;
 
     this.refreshView();
@@ -3686,7 +3690,8 @@ class HiGlassComponent extends React.Component {
             }}
             onTogglePositionSearchBox={this.handleTogglePositionSearchBox.bind(this)}
             onTrackPositionChosen={position => this.handleTrackPositionChosen(view.uid, position)}
-            onViewOptionsChanged={(newOptions) => this.handleViewOptionsChanged(view.uid, newOptions)}
+            onViewOptionsChanged={
+              (newOptions) => this.handleViewOptionsChanged(view.uid, newOptions)}
             onUnlockLocation={uid => this.handleUnlock(uid, this.locationLocks)}
             onUnlockZoom={uid => this.handleUnlock(uid, this.zoomLocks)}
             onUnlockZoomAndLocation={(uid) => {
