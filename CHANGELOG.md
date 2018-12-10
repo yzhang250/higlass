@@ -3,6 +3,7 @@
 - Add new public event `cursorLocation`. See [`docs/examples/apis/cursor-location.html`](docs/examples/apis/cursor-location.html) for an example.
 - Added ability to define label margins
 - Add a new option to tracks that support axis: `axisMargin` to add some margin to an axis. See [docs/examples/viewconfs/axis-margin.json](docs/examples/viewconfs/axis-margin.json) for an example
+- Make view spacing adjustable via initialization options. See [/docs/examples/apis/adjust-view-spacing.html](/docs/examples/apis/adjust-view-spacing.html) for an example.
 
 ## v1.3.0
 
