@@ -5,6 +5,10 @@
 - Add a new option to tracks that support axis: `axisMargin` to add some margin to an axis. See [docs/examples/viewconfs/axis-margin.json](docs/examples/viewconfs/axis-margin.json) for an example
 - Make view spacing adjustable via initialization options. See [/docs/examples/apis/adjust-view-spacing.html](/docs/examples/apis/adjust-view-spacing.html) for an example.
 
+## v1.3.1
+
+- Clear mouse position indicator when leaving the root dom element, on blurring the window, and when no track is hovered
+
 ## v1.3.0
 
 - Added `TiledPixiTrack.on` event handler to listen to data changes
