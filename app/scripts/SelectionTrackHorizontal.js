@@ -1,8 +1,11 @@
 import { brush } from 'd3-brush';
 import { event } from 'd3-selection';
 import slugid from 'slugid';
+import createPubSub from 'pub-sub-es';
+import { tileProxy } from './services';
 
 import SVGTrack from './SVGTrack';
+const ANNOS_SERVER = 'http://localhost:8000/api/v0/'
 
 class SelectionTrackHorizontal extends SVGTrack {
   constructor(context, options) {
@@ -19,10 +22,11 @@ class SelectionTrackHorizontal extends SVGTrack {
     this.context = context;
     this.options = options;
     this.newSelection = false;
+    this.localPubSub = createPubSub();
 
     this.context.pubSub.subscribe(
       'app.mouseClick', () => {
-        console.log('mouseClick');
+        // console.log('mouseClick');
         this.disableBrush();
       }
     );
@@ -64,9 +68,27 @@ class SelectionTrackHorizontal extends SVGTrack {
     // hearing registerSelectionChanged
     this.draw();
 
+    this.prevZoomLevel = 0;
+    this.fetchAnnotations();
+
     registerSelectionChanged(uid, this.selectionChanged.bind(this));
   }
 
+  fetchAnnotations() {
+    const url = ANNOS_SERVER
+      + `annos-1d/?r=${Math.floor(this._xScale.domain()[0])}`
+      + `,${Math.floor(this._xScale.domain()[1])}`;
+
+    fetch(url, {
+      method: 'GET',
+    }).then(response => response.json())
+    .then(content => {
+      console.log('content:', content);
+    })
+    
+    console.log('url:', url);
+    return url;
+  }
   /**
    * Enable the brush. If a parameter is passed, create
    * the brush on top of that rectangle.
@@ -106,13 +128,17 @@ class SelectionTrackHorizontal extends SVGTrack {
       .style('pointer-events', 'none');
 
     if (onRect !== null && onRect !== undefined) {
-      console.log('enabling', onRect);
+      // console.log('enabling', onRect);
       // we've clicked on an existing selection so don't
       // allow selecting regions outside of it
       this.gBrush.selectAll('.overlay')
         .style('pointer-events', 'none');
 
-      this.selectionXDomain = this.options.savedRegions[onRect][0];
+        console.log('savedRegions:', this.options.savedRegions)
+      this.selectionXDomain = [
+        this.options.savedRegions[onRect].x_start,
+        this.options.savedRegions[onRect].x_end,
+      ];
       this.draw();
     }
   }
@@ -133,6 +159,8 @@ class SelectionTrackHorizontal extends SVGTrack {
       this.gBrush.selectAll('.overlay')
         .attr('cursor', 'move');
     }
+
+    this.localPubSub.publish('track.brushEnded', this.selected);
   }
 
   brushed() {
@@ -154,16 +182,18 @@ class SelectionTrackHorizontal extends SVGTrack {
     // console.log('yDomain:', yDomain);
     if (this.selected !== null
       && this.selected !== undefined) {
-      this.options.savedRegions[this.selected][0] = this.selectionXDomain;
+      this.options.savedRegions[this.selected].x_start = this.selectionXDomain[0];
+      this.options.savedRegions[this.selected].x_end = this.selectionXDomain[1];
     } else if (this.newSelection) {
       // Nothing is selected, so we've just started brushing
       // a new selection. Create a new section
-      console.log('adding:', this.selectionXDomain);
+      // console.log('adding:', this.selectionXDomain);
       this.selected = this.options.savedRegions.length;
-      this.options.savedRegions.push([
-        this.selectionXDomain,
-        null
-      ]);
+      this.options.savedRegions.push([{
+        x_start: this.selectionXDomain[0],
+        x_end: this.selectionXDomain[0],
+        uid: slugid.nice(),
+      }]);
     }
 
     this.setDomainsCallback(xDomain, yDomain);
@@ -238,9 +268,9 @@ class SelectionTrackHorizontal extends SVGTrack {
       .remove();
 
     rectSelection = this.gMain.selectAll('.region')
-      .attr('x', d => this._xScale(d[0][0][0]))
+      .attr('x', d => this._xScale(d[0].x_start))
       .attr('y', 0)
-      .attr('width', d => this._xScale(d[0][0][1]) - this._xScale(d[0][0][0]))
+      .attr('width', d => this._xScale(d[0].x_end) - this._xScale(d[0].x_start))
       .attr('height', this.dimensions[1])
       .on('click', (d) => {
         this.disableBrush();
@@ -269,6 +299,15 @@ class SelectionTrackHorizontal extends SVGTrack {
     this.yScale(newYScale);
 
     this.draw();
+    const zoomLevel = tileProxy.calculateZoomLevel(
+      this._xScale, 0, Number.MAX_SAFE_INTEGER, 1
+    );
+
+    if (zoomLevel !== this.prevZoomLevel) {
+      this.fetchAnnotations();
+      this.prevZoomLevel = zoomLevel;
+      console.log('zoomLevel', zoomLevel);
+    }
   }
 
   setPosition(newPosition) {

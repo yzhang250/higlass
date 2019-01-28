@@ -31,7 +31,7 @@
       <span>X position:</span> <input id='x-position' type='text' /><br>
       <span>Y position:</span> <input id='y-position' /><br>
       <textarea id="description" rows="5"></textarea><br>
-      <button id="save-button" style="visibility: hidden">Save</button><br>
+      <button id="save-button" style="visibility: visible">Save</button><br>
     </div>
 </body>
 <script src='hglib.js'>
@@ -68,12 +68,12 @@
           },
           {
             "type": "combined",
-            "uid": "dblx2SinQMyhX7JUMTcTvg",
+            "uid": "xyxx",
             "height": 80,
             "width": 368,
             "contents": [
               {
-                "uid": "HFzY1uJ1QEekb_Kg8EkbVw",
+                "uid": "selection",
                 "type": "selection-track-horizontal",
                 "options": {
                   "projectionFillColor": "#777",
@@ -86,13 +86,10 @@
                   "fillOpacity": 0.3,
                   "strokeOpacity": 0.7,
                   "savedRegions": [
-                    [
-                      [
-                        1346033021.5886,
-                        1393263522.5946486
-                      ],
-                      null
-                    ]
+                    {
+                      "x_start": 1346033021.5886,
+                      "x_end": 1393263522.5946486
+                    }
                   ]
                 },
                 "position": "top",
@@ -109,7 +106,7 @@
         "whole": [],
         "gallery": []
       },
-      "uid": "EhlO1fwhSuyCliHSEzygnA",
+      "uid": "aa",
       "initialXDomain": [
         1221442217.210575,
         1525183197.8184395
@@ -172,13 +169,13 @@ const rangeListenerId = hgv.on(
       range.dataRange[0] && +range.dataRange[0][1]
     )
 
-    if (!range.dataRange[0]) {
-      d3.select('#save-button')
-      .style('visibility', 'hidden');
-    } else {
-      d3.select('#save-button')
-      .style('visibility', 'visible');
-    }
+    // if (!range.dataRange[0]) {
+    //   d3.select('#save-button')
+    //   .style('visibility', 'hidden');
+    // } else {
+    //   d3.select('#save-button')
+    //   .style('visibility', 'visible');
+    // }
     d3.select('#x-position')
     .property('value', minValue);
     d3.select('#y-position')
@@ -188,17 +185,47 @@ const rangeListenerId = hgv.on(
 
 d3.select('#save-button')
 .on('click', () => {
-  const viewconf = hgv.getViewConfig();
-  const track = viewconf.views[0].tracks.top[2].contents[1];
+  // const viewconf = hgv.getViewConfig();
+  // const track = viewconf.views[0].tracks.top[2].contents[1];
 
-  if (!track.options.savedRegions) {
-    track.options.savedRegions = [currentRange];
-  } else {
-    track.options.savedRegions += [currentRange];
-  }
+    // if (!track.options.savedRegions) {
+    //   track.options.savedRegions = [currentRange];
+    // } else {
+    //   track.options.savedRegions += [currentRange];
+    // }
+    let desc = d3.select('#description');
+    console.log('desc.value', desc.node().value);
 
-  hgv.setViewConfig(viewconf);
-})
+  // hgv.setViewConfig(viewconf);
+});
+
+setTimeout(() => {
+  const trackObj = hgv.getComponent().getTrackObject('aa', 'selection');
+
+  trackObj.localPubSub.subscribe('track.brushEnded', (d) => {
+    const savedRegion = JSON.parse(JSON.stringify(trackObj.options.savedRegions[d][0]));
+    console.log('brushended xyz', savedRegion);
+
+    savedRegion.x_start = Math.floor(savedRegion.x_start);
+    savedRegion.x_end = Math.floor(savedRegion.x_end);
+
+    fetch('//localhost:8000/api/v0/annos-1d/', {
+      method: 'POST',
+      body: JSON.stringify(savedRegion),
+      headers: new Headers({
+        'Content-Type': 'application/json'
+      })
+    }).then((response) => {
+      console.log('response', response);
+      return response.json();
+    }).then((jsonResponse) => {
+      console.log('jsonResponse:', jsonResponse);
+    });
+    // check if this object exists
+  });
+
+  console.log('trackObj:', trackObj);
+});
    // window.hgApi.getComponent().tiledPlots.aa.handleAddTrack('top');
 
  // window.hgApi.activateTool('select-limited');
