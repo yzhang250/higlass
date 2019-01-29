@@ -5,7 +5,7 @@ import createPubSub from 'pub-sub-es';
 import { tileProxy } from './services';
 
 import SVGTrack from './SVGTrack';
-const ANNOS_SERVER = 'http://localhost:8000/api/v0/'
+const ANNOS_SERVER = 'http://localhost:8000/api/v0/';
 
 class SelectionTrackHorizontal extends SVGTrack {
   constructor(context, options) {
@@ -74,18 +74,26 @@ class SelectionTrackHorizontal extends SVGTrack {
     registerSelectionChanged(uid, this.selectionChanged.bind(this));
   }
 
+  // syncAnnotations(newAnnotations) {
+  //   const presentUids = new Set(this.options.savedRegions.map(x => x.uid));
+  //   const newUids = new Set(newAnnotations.map(x => x.uid));
+
+  //   const toRemove = [...presentUids].filter(x => !newUids.has);
+
+  // }
+
   fetchAnnotations() {
-    const url = ANNOS_SERVER
+    const url = `${ANNOS_SERVER}`
       + `annos-1d/?r=${Math.floor(this._xScale.domain()[0])}`
       + `,${Math.floor(this._xScale.domain()[1])}`;
 
     fetch(url, {
       method: 'GET',
     }).then(response => response.json())
-    .then(content => {
-      console.log('content:', content);
-    })
-    
+      .then((content) => {
+        console.log('content:', content);
+      });
+
     console.log('url:', url);
     return url;
   }
