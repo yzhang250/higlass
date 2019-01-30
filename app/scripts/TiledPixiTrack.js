@@ -508,11 +508,6 @@ class TiledPixiTrack extends PixiTrack {
         this.tileGraphics[fetchedTileIDs[i]] = newGraphics;
       }
     }
-
-    /*
-        if (added)
-            this.draw();
-        */
   }
 
   /**

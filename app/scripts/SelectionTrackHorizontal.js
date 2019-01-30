@@ -5,6 +5,8 @@ import createPubSub from 'pub-sub-es';
 import { tileProxy } from './services';
 
 import SVGTrack from './SVGTrack';
+import TileManager from './TileManager';
+
 const ANNOS_SERVER = 'http://localhost:8000/api/v0/';
 
 class SelectionTrackHorizontal extends SVGTrack {
@@ -23,6 +25,9 @@ class SelectionTrackHorizontal extends SVGTrack {
     this.options = options;
     this.newSelection = false;
     this.localPubSub = createPubSub();
+    this.tileManager = new TileManager(
+      this
+    );
 
     this.context.pubSub.subscribe(
       'app.mouseClick', () => {
@@ -302,20 +307,54 @@ class SelectionTrackHorizontal extends SVGTrack {
     }
   }
 
+  calculateVisibleTiles() {
+    // if we don't know anything about this dataset, no point
+    // in trying to get tiles
+    // calculate the zoom level given the scales and the data bounds
+    const maxInt = Number.MAX_SAFE_INTEGER;
+
+    const zoomLevel = tileProxy.calculateZoomLevel(
+      this._xScale, 0, maxInt, 256
+    );
+
+    // x doesn't necessary mean 'x' axis, it just refers to the relevant axis
+    // (x if horizontal, y if vertical)
+    const xTiles = tileProxy.calculateTiles(
+      zoomLevel, this._xScale,
+      0,
+      maxInt,
+      Math.log(maxInt) / Math.log(2),
+      maxInt
+    );
+
+    const tiles = xTiles.map(x => [zoomLevel, x]);
+
+    console.log('tiles:', tiles);
+    return tiles;
+  }
+
+  calculateVisibleTileIds() {
+    const tiles = this.calculateVisibleTiles();
+
+    return tiles.map(t => t.join('.'));
+  }
+
   zoomed(newXScale, newYScale) {
     this.xScale(newXScale);
     this.yScale(newYScale);
 
     this.draw();
-    const zoomLevel = tileProxy.calculateZoomLevel(
-      this._xScale, 0, Number.MAX_SAFE_INTEGER, 1
-    );
+    // const zoomLevel = tileProxy.calculateZoomLevel(
+    //   this._xScale, 0, Number.MAX_SAFE_INTEGER, 1
+    // );
 
-    if (zoomLevel !== this.prevZoomLevel) {
-      this.fetchAnnotations();
-      this.prevZoomLevel = zoomLevel;
-      console.log('zoomLevel', zoomLevel);
-    }
+    // if (zoomLevel !== this.prevZoomLevel) {
+    //   this.fetchAnnotations();
+    //   this.prevZoomLevel = zoomLevel;
+    //   console.log('zoomLevel', zoomLevel);
+    // }
+
+    this.tileManager.refreshTiles();
   }
 
   setPosition(newPosition) {
