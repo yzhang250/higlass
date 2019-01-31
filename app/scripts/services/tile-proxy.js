@@ -355,12 +355,8 @@ export const calculateTiles = (
   zoomLevel, scale, minX, maxX, maxZoom, maxDim
 ) => {
   const zoomLevelFinal = Math.min(zoomLevel, maxZoom);
-  console.log('zoomLevelFinal', zoomLevelFinal,
-    Math.log(Number.MAX_SAFE_INTEGER) / Math.log(2));
-
-  // the ski areas are positioned according to their
-  // cumulative widths, which means the tiles need to also
-  // be calculated according to cumulative width
+  // console.log('zoomLevelFinal', zoomLevelFinal,
+  //   Math.log(Number.MAX_SAFE_INTEGER) / Math.log(2));
 
   const tileWidth = maxDim / (2 ** zoomLevelFinal);
   // console.log('maxDim:', maxDim);

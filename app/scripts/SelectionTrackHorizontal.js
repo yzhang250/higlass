@@ -7,7 +7,70 @@ import { tileProxy } from './services';
 import SVGTrack from './SVGTrack';
 import TileManager from './TileManager';
 
-const ANNOS_SERVER = 'http://localhost:8000/api/v0/';
+const ANNOS_SERVER = 'http://localhost:8000/api/v0';
+
+const TILESET_INFO = {
+  min_pos: [0],
+  max_pos: [Math.floor(1e12)],
+  tile_size: 256,
+};
+
+TILESET_INFO.max_zoom = Math.ceil(
+  Math.log(TILESET_INFO.max_pos
+    / TILESET_INFO.tile_size) / Math.log(2)
+);
+
+
+/**
+ * Convert a tileId consisting of a number
+ *
+ * @param  {string} tileId Tile id that consists of z.x
+ * @return {[int,int]}     The start and end positions of
+ *                             the interval
+ */
+function tileIdToRange(tileId) {
+  const idParts = tileId.split('.');
+
+  const zoomLevel = +idParts[0];
+  const xPos = +idParts[1];
+
+  const tileWidth = TILESET_INFO.tile_size
+    * 2 ** (TILESET_INFO.max_zoom - zoomLevel);
+
+  const xStart = TILESET_INFO.min_pos[0] + tileWidth * xPos;
+  const xEnd = xStart + tileWidth;
+
+  return [xStart, xEnd];
+}
+/**
+ * A fetcher for annotations.
+ */
+class AnnotationDataFetcher {
+  constructor(sourceAPI) {
+    this.sourceAPI = sourceAPI;
+  }
+
+  fetchTilesDebounced(
+    onTilesReceived,
+    toFetchList,
+  ) {
+    console.log('toFetchList', toFetchList);
+
+    const queryString = toFetchList.map((x) => {
+      const range = tileIdToRange(x);
+      return `r=${range[0]},${range[1]}`;
+    }).join('&');
+
+    fetch(`${ANNOS_SERVER}/annos-1d/?${queryString}`,
+      {
+        method: 'GET',
+      })
+      .then(ret => ret.json())
+      .then((json) => {
+        console.log('json:', json);
+      });
+  }
+}
 
 class SelectionTrackHorizontal extends SVGTrack {
   constructor(context, options) {
@@ -25,8 +88,13 @@ class SelectionTrackHorizontal extends SVGTrack {
     this.options = options;
     this.newSelection = false;
     this.localPubSub = createPubSub();
+
+    this.dataFetcher = new AnnotationDataFetcher(
+      'http://localhost:8000/api/v0'
+    );
     this.tileManager = new TileManager(
-      this
+      this,
+      this.dataFetcher,
     );
 
     this.context.pubSub.subscribe(
@@ -79,29 +147,6 @@ class SelectionTrackHorizontal extends SVGTrack {
     registerSelectionChanged(uid, this.selectionChanged.bind(this));
   }
 
-  // syncAnnotations(newAnnotations) {
-  //   const presentUids = new Set(this.options.savedRegions.map(x => x.uid));
-  //   const newUids = new Set(newAnnotations.map(x => x.uid));
-
-  //   const toRemove = [...presentUids].filter(x => !newUids.has);
-
-  // }
-
-  fetchAnnotations() {
-    const url = `${ANNOS_SERVER}`
-      + `annos-1d/?r=${Math.floor(this._xScale.domain()[0])}`
-      + `,${Math.floor(this._xScale.domain()[1])}`;
-
-    fetch(url, {
-      method: 'GET',
-    }).then(response => response.json())
-      .then((content) => {
-        console.log('content:', content);
-      });
-
-    console.log('url:', url);
-    return url;
-  }
   /**
    * Enable the brush. If a parameter is passed, create
    * the brush on top of that rectangle.
@@ -311,11 +356,13 @@ class SelectionTrackHorizontal extends SVGTrack {
     // if we don't know anything about this dataset, no point
     // in trying to get tiles
     // calculate the zoom level given the scales and the data bounds
-    const maxInt = Number.MAX_SAFE_INTEGER;
+    const maxInt = TILESET_INFO.max_pos[0];
+    console.log('maxInt:', maxInt);
 
     const zoomLevel = tileProxy.calculateZoomLevel(
-      this._xScale, 0, maxInt, 256
+      this._xScale, 0, maxInt, TILESET_INFO.tile_size
     );
+    console.log('zoomLevel:', zoomLevel);
 
     // x doesn't necessary mean 'x' axis, it just refers to the relevant axis
     // (x if horizontal, y if vertical)
@@ -327,16 +374,19 @@ class SelectionTrackHorizontal extends SVGTrack {
       maxInt
     );
 
-    const tiles = xTiles.map(x => [zoomLevel, x]);
+    const tiles = xTiles.map(x => ({
+      tileId: [zoomLevel, x],
+      remoteId: [zoomLevel, x].join('.'),
+    }));
 
-    console.log('tiles:', tiles);
+    // console.log('tiles:', tiles);
     return tiles;
   }
 
   calculateVisibleTileIds() {
     const tiles = this.calculateVisibleTiles();
 
-    return tiles.map(t => t.join('.'));
+    return tiles.map(t => t);
   }
 
   zoomed(newXScale, newYScale) {
