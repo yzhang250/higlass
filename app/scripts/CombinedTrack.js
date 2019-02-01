@@ -83,6 +83,12 @@ class CombinedTrack {
     }
   }
 
+  zoomEnded() {
+    for (let i = 0; i < this.childTracks.length; i++) {
+      this.childTracks[i].zoomEnded();
+    }
+  }
+
   // refXScale(xScale) {
   //   for (let i = 0; i < this.childTracks.length; i++) {
   //     this.childTracks[i].refXScale(xScale);

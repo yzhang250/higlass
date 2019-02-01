@@ -1061,6 +1061,15 @@ class TrackRenderer extends React.Component {
     this.zooming = false;
 
     this.props.pubSub.publish('app.zoomEnd');
+    for (const uid in this.trackDefObjects) {
+      const track = this.trackDefObjects[uid].trackObject;
+
+      if (track.zoomEnded) {
+        track.zoomEnded();
+      } else {
+        console.log('no zoomEnded', track);
+      }
+    }
   }
 
   applyZoomTransform(notify = true) {

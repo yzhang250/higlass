@@ -67,7 +67,11 @@ class AnnotationDataFetcher {
       })
       .then(ret => ret.json())
       .then((json) => {
+        const ret = {};
+
+        ret[tileId] = json['results'];
         console.log('json:', json);
+        console.log('ret:', ret);
       });
   }
 }
@@ -142,7 +146,6 @@ class SelectionTrackHorizontal extends SVGTrack {
     this.draw();
 
     this.prevZoomLevel = 0;
-    this.fetchAnnotations();
 
     registerSelectionChanged(uid, this.selectionChanged.bind(this));
   }
@@ -192,7 +195,7 @@ class SelectionTrackHorizontal extends SVGTrack {
       this.gBrush.selectAll('.overlay')
         .style('pointer-events', 'none');
 
-        console.log('savedRegions:', this.options.savedRegions)
+      console.log('savedRegions:', this.options.savedRegions)
       this.selectionXDomain = [
         this.options.savedRegions[onRect].x_start,
         this.options.savedRegions[onRect].x_end,
@@ -405,6 +408,11 @@ class SelectionTrackHorizontal extends SVGTrack {
     // }
 
     this.tileManager.refreshTiles();
+    // console.trace('zoomed');
+  }
+
+  zoomEnded() {
+    // console.log('zoomEnded');
   }
 
   setPosition(newPosition) {

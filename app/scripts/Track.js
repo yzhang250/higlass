@@ -112,6 +112,10 @@ class Track {
     this.yScale(newYScale);
   }
 
+  zoomEnded() {
+
+  }
+
   refScalesChanged(refXScale, refYScale) {
     this._refXScale = refXScale;
     this._refYScale = refYScale;
