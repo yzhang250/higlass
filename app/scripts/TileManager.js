@@ -6,6 +6,7 @@ class TileManager {
     this.fetchedTiles = {};
     this.trackObj = trackObj;
     this.dataFetcher = dataFetcher;
+    this.listeners = {};
   }
 
   /**
@@ -56,6 +57,8 @@ class TileManager {
    */
   refreshTiles() {
     const visibleTiles = this.trackObj.calculateVisibleTiles();
+    this.visibleTiles = visibleTiles;
+    this.visibleTileIds = new Set(this.visibleTiles.map(x => x.tileId));
 
     // tiles that are fetched
     const fetchedTileIDs = new Set(Object.keys(this.fetchedTiles));
@@ -128,7 +131,7 @@ class TileManager {
 
 
     this.synchronizeTilesAndGraphics();
-    this.draw();
+    this.trackObj.draw();
 
     // console.log('# children', this.pMain.children.length, Object.keys(this.fetchedTiles).length);
   }
@@ -159,17 +162,10 @@ class TileManager {
     this.renderVersion += 1;
 
     for (let i = 0; i < fetchedTileIDs.length; i++) {
-      // console.log('this.tileGraphics', this.tileGraphics);
-      if (!(fetchedTileIDs[i] in this.tileGraphics)) {
-        // console.trace('adding:', fetchedTileIDs[i]);
-
-        const newGraphics = new PIXI.Graphics();
-        this.pMain.addChild(newGraphics);
-
-        this.fetchedTiles[fetchedTileIDs[i]].graphics = newGraphics;
-        this.initTile(this.fetchedTiles[fetchedTileIDs[i]]);
-
-        this.tileGraphics[fetchedTileIDs[i]] = newGraphics;
+      if (!this.trackObj.tileLoaded(fetchedTileIDs[i])) {
+        this.trackObj.initTile(
+          this.fetchedTiles[fetchedTileIDs[i]]
+        );
       }
     }
   }
@@ -181,7 +177,7 @@ class TileManager {
     const fetchedTileIDs = Object.keys(this.fetchedTiles);
 
     for (let i = 0; i < fetchedTileIDs.length; i++) {
-      this.updateTile(this.fetchedTiles[fetchedTileIDs[i]]);
+      this.trackObj.updateTile(this.fetchedTiles[fetchedTileIDs[i]]);
     }
   }
 
@@ -211,8 +207,6 @@ class TileManager {
    *                         (e.g. [5, 10])
    */
   fetchNewTiles(toFetch) {
-    console.log('toFetch', toFetch);
-
     if (toFetch.length > 0) {
       const toFetchList = [...(new Set(toFetch.map(x => x.remoteId)))];
 
@@ -272,8 +266,10 @@ class TileManager {
     this.synchronizeTilesAndGraphics();
 
     // we need to draw when we receive new data
-    this.draw();
-    this.drawLabel(); // update the current zoom level
+    this.trackObj.draw();
+    if (this.trackObj.drawLabel) {
+      this.drawLabel(); // update the current zoom level
+    }
 
     // Let HiGlass know we need to re-render
     // check if the value scale has changed
@@ -294,13 +290,47 @@ class TileManager {
       }
     }
 
-    this.animate();
+    if (this.trackObj.animate) {
+      this.trackObj.animate();
+    }
 
     // 1. Check if all visible tiles are loaded
     // 2. If `true` then send out event
-    if (this.areAllVisibleTilesLoaded()) {
+    if (this.trackObj.areAllVisibleTilesLoaded
+      && this.trackObj.areAllVisibleTilesLoaded()) {
       this.pubSub.publish('TiledPixiTrack.tilesLoaded', { uuid: this.uuid });
     }
+  }
+
+  /**
+   * Register an event listener for track events. Currently, the only supported
+   * event is ``dataChanged``.
+   *
+   * @param {string} event The event to listen for
+   * @param {function} callback The callback to call when the event occurs. The
+   *  parameters for the event depend on the event called.
+   *
+   * @example
+   *
+   * ..code-block::
+   *
+   *  trackObj.on('dataChanged', (newData) => {
+   *   console.log('newData:', newData)
+   *  });
+   */
+  on(event, callback) {
+    if (!this.listeners[event]) {
+      this.listeners[event] = [];
+    }
+
+    this.listeners[event].push(callback);
+  }
+
+  off(event, callback) {
+    const id = this.listeners[event].indexOf(callback);
+    if (id === -1 || id >= this.listeners[event].length) return;
+
+    this.listeners[event].splice(id, 1);
   }
 }
 

@@ -54,10 +54,10 @@ class AnnotationDataFetcher {
     onTilesReceived,
     toFetchList,
   ) {
-    console.log('toFetchList', toFetchList);
-
+    const rangeToTileId = {};
     const queryString = toFetchList.map((x) => {
       const range = tileIdToRange(x);
+      rangeToTileId[range] = x;
       return `r=${range[0]},${range[1]}`;
     }).join('&');
 
@@ -67,11 +67,15 @@ class AnnotationDataFetcher {
       })
       .then(ret => ret.json())
       .then((json) => {
-        const ret = {};
+        const byTileId = Object.entries(json)
+          .map(x => [rangeToTileId[x[0]], x[1]])
+          .reduce((accum, [k, v]) => {
+            accum[k] = v;
+            return accum;
+          }, {});
 
-        ret[tileId] = json['results'];
-        console.log('json:', json);
-        console.log('ret:', ret);
+        // console.log('byTileId', byTileId);
+        onTilesReceived(byTileId);
       });
   }
 }
@@ -92,6 +96,7 @@ class SelectionTrackHorizontal extends SVGTrack {
     this.options = options;
     this.newSelection = false;
     this.localPubSub = createPubSub();
+    this.loadedTiles = {};
 
     this.dataFetcher = new AnnotationDataFetcher(
       'http://localhost:8000/api/v0'
@@ -195,7 +200,7 @@ class SelectionTrackHorizontal extends SVGTrack {
       this.gBrush.selectAll('.overlay')
         .style('pointer-events', 'none');
 
-      console.log('savedRegions:', this.options.savedRegions)
+      // console.log('savedRegions:', this.options.savedRegions)
       this.selectionXDomain = [
         this.options.savedRegions[onRect].x_start,
         this.options.savedRegions[onRect].x_end,
@@ -304,6 +309,9 @@ class SelectionTrackHorizontal extends SVGTrack {
       dest = [[x0, y0], [x1, y1]];
     }
 
+    // console.log('this.visibleAndFetchedTiles',
+    //   this.tileManager.visibleAndFetchedTiles());
+
     let rectSelection = this.gMain.selectAll('.region')
       .data(
         this.options.savedRegions
@@ -360,12 +368,10 @@ class SelectionTrackHorizontal extends SVGTrack {
     // in trying to get tiles
     // calculate the zoom level given the scales and the data bounds
     const maxInt = TILESET_INFO.max_pos[0];
-    console.log('maxInt:', maxInt);
 
     const zoomLevel = tileProxy.calculateZoomLevel(
       this._xScale, 0, maxInt, TILESET_INFO.tile_size
     );
-    console.log('zoomLevel:', zoomLevel);
 
     // x doesn't necessary mean 'x' axis, it just refers to the relevant axis
     // (x if horizontal, y if vertical)
@@ -389,7 +395,7 @@ class SelectionTrackHorizontal extends SVGTrack {
   calculateVisibleTileIds() {
     const tiles = this.calculateVisibleTiles();
 
-    return tiles.map(t => t);
+    return new Set(tiles.map(t => t.tileId));
   }
 
   zoomed(newXScale, newYScale) {
@@ -409,6 +415,37 @@ class SelectionTrackHorizontal extends SVGTrack {
 
     this.tileManager.refreshTiles();
     // console.trace('zoomed');
+  }
+
+  /**
+   * Check if this tile has already been loaded.
+   * @param  {[type]} tileId [description]
+   * @return {[type]}        [description]
+   */
+  tileLoaded(tileId) {
+    return this.loadedTiles[tileId];
+  }
+
+  /**
+   * Initialize a new tile.
+   */
+  initTile(tile) {
+    // check if we have graphics for this tile,
+    // if not, create them, otherwise do some
+    // basic initialization
+    return tile;
+  }
+
+  /**
+   * Update a tile because new tiles have been
+   * loaded. This may need to be called when a
+   * scale is changed.
+   *
+   * @param  {Object} tile The tile to to update
+   * @return {Nothing}      Nothing
+   */
+  updateTile(tile) {
+    return tile;
   }
 
   zoomEnded() {
