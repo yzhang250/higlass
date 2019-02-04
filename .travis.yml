@@ -6,6 +6,8 @@ addons:
   apt:
     packages:
       - xvfb
+services:
+    - xvfb
 install:
     - npm install -g xvfb-maybe
 before_script:
