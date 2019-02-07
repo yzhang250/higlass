@@ -205,12 +205,20 @@ d3.select('#save-button')
 setTimeout(() => {
   const trackObj = hgv.getComponent().getTrackObject('aa', 'selection');
 
-  trackObj.localPubSub.subscribe('track.brushEnded', (d) => {
-    const savedRegion = JSON.parse(JSON.stringify(trackObj.options.savedRegions[d][0]));
-    console.log('brushended xyz', savedRegion);
+  trackObj.localPubSub.subscribe('track.brushEnded', (savedRegion) => {
+    console.log('savedRegion', savedRegion);
 
+    if (savedRegion.uid) {
+      // we're updating an annotation so add it to the chain
+      // by setting prev_uid to uid and deleting uid so that
+      // it can be reassigned by the server
+      savedRegion.prev_uid = savedRegion.uid;
+      delete savedRegion.uid;
+    }
     savedRegion.x_start = Math.floor(savedRegion.x_start);
     savedRegion.x_end = Math.floor(savedRegion.x_end);
+
+    console.log(JSON.stringify(savedRegion));
 
     fetch('//localhost:8000/api/v0/annos-1d/', {
       method: 'POST',
@@ -224,6 +232,7 @@ setTimeout(() => {
     }).then((jsonResponse) => {
       console.log('jsonResponse:', jsonResponse);
     });
+    
     // check if this object exists
   });
 

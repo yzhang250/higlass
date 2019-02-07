@@ -34,8 +34,7 @@ function tileIdToRange(tileId) {
   const zoomLevel = +idParts[0];
   const xPos = +idParts[1];
 
-  const tileWidth = TILESET_INFO.tile_size
-    * 2 ** (TILESET_INFO.max_zoom - zoomLevel);
+  const tileWidth = TILESET_INFO.max_pos[0] / 2 ** zoomLevel;
 
   const xStart = TILESET_INFO.min_pos[0] + tileWidth * xPos;
   const xEnd = xStart + tileWidth;
@@ -74,7 +73,7 @@ class AnnotationDataFetcher {
             return accum;
           }, {});
 
-        // console.log('byTileId', byTileId);
+        console.log('byTileId', byTileId);
         onTilesReceived(byTileId);
       });
   }
@@ -202,8 +201,8 @@ class SelectionTrackHorizontal extends SVGTrack {
 
       // console.log('savedRegions:', this.options.savedRegions)
       this.selectionXDomain = [
-        this.options.savedRegions[onRect].x_start,
-        this.options.savedRegions[onRect].x_end,
+        this.visibleAnnotations[onRect].x_start,
+        this.visibleAnnotations[onRect].x_end,
       ];
       this.draw();
     }
@@ -226,7 +225,38 @@ class SelectionTrackHorizontal extends SVGTrack {
         .attr('cursor', 'move');
     }
 
-    this.localPubSub.publish('track.brushEnded', this.selected);
+
+    this.finishedEditing();
+  }
+
+  selectedRegion() {
+    const selectedRegion = this.visibleAnnotations[this.selected];
+
+    return selectedRegion;
+  }
+
+  newAnnotation() {
+    const annoUid = slugid.nice();
+    this.visibleAnnotations[annoUid] = {
+      x_start: this.selectionXDomain[0],
+      x_end: this.selectionXDomain[0],
+      anno_uid: annoUid,
+    };
+
+    this.selected = annoUid;
+  }
+
+  updateSelectedAnnotation() {
+    const selectedRegion = this.selectedRegion();
+    selectedRegion.x_start = this.selectionXDomain[0];
+    selectedRegion.x_end = this.selectionXDomain[1];
+  }
+
+  finishedEditing() {
+    const selectedRegion = this.selectedRegion();
+
+    this.localPubSub.publish('track.brushEnded',
+      selectedRegion);
   }
 
   brushed() {
@@ -248,18 +278,12 @@ class SelectionTrackHorizontal extends SVGTrack {
     // console.log('yDomain:', yDomain);
     if (this.selected !== null
       && this.selected !== undefined) {
-      this.options.savedRegions[this.selected].x_start = this.selectionXDomain[0];
-      this.options.savedRegions[this.selected].x_end = this.selectionXDomain[1];
+      this.updateSelectedAnnotation();
     } else if (this.newSelection) {
       // Nothing is selected, so we've just started brushing
       // a new selection. Create a new section
       // console.log('adding:', this.selectionXDomain);
-      this.selected = this.options.savedRegions.length;
-      this.options.savedRegions.push([{
-        x_start: this.selectionXDomain[0],
-        x_end: this.selectionXDomain[0],
-        uid: slugid.nice(),
-      }]);
+      this.newAnnotation();
     }
 
     this.setDomainsCallback(xDomain, yDomain);
@@ -292,10 +316,20 @@ class SelectionTrackHorizontal extends SVGTrack {
     }
   }
 
+  visibleAnnotations() {
+    return this.tileManager
+      .visibleAndFetchedTiles()
+      .filter(x => x.tileData && x.tileData.results && x.tileData.results.length)
+      .flatMap(x => x.tileData.results);
+  }
+
   draw() {
     if (!this._xScale || !this.yScale) {
       return;
     }
+
+    // console.log('this.tm.visibleAndFetchedTiles',
+    //   this.visibleAnnotations());
 
     let dest = null;
 
@@ -309,15 +343,20 @@ class SelectionTrackHorizontal extends SVGTrack {
       dest = [[x0, y0], [x1, y1]];
     }
 
+    const allRects = Object.values(this.visibleAnnotations);
+
+    // const allRects = this.options.savedRegions;
+
     // console.log('this.visibleAndFetchedTiles',
     //   this.tileManager.visibleAndFetchedTiles());
 
     let rectSelection = this.gMain.selectAll('.region')
       .data(
-        this.options.savedRegions
+        allRects
           .map((r, i) => [r, i]) // keep track of the index of each
         // rectangle so that we can use it to alter the selection later
-          .filter(r => r[1] !== this.selected)
+          .filter(r => r.anno_uid !== this.selected),
+        x => x[0].anno_uid
       );
 
     // previously drawn selections can be interacted with
@@ -343,8 +382,8 @@ class SelectionTrackHorizontal extends SVGTrack {
       .attr('height', this.dimensions[1])
       .on('click', (d) => {
         this.disableBrush();
-        this.selected = d[1];
-        this.enableBrush(d[1]);
+        this.selected = d[0].anno_uid;
+        this.enableBrush(d[0].anno_uid);
 
         event.preventDefault();
         event.stopPropagation();
@@ -384,11 +423,16 @@ class SelectionTrackHorizontal extends SVGTrack {
     );
 
     const tiles = xTiles.map(x => ({
-      tileId: [zoomLevel, x],
+      tileId: [zoomLevel, x].join('.'),
+      tilePos: x,
       remoteId: [zoomLevel, x].join('.'),
     }));
 
-    // console.log('tiles:', tiles);
+    console.log('xScale', this._xScale.domain(), this._xScale.range());
+    console.log('calculateTileAndPosInTile',
+      tileProxy.calculateTileAndPosInTile(TILESET_INFO, maxInt,
+        0, zoomLevel, this._xScale.domain()[0]));
+    console.log('tiles:', tiles);
     return tiles;
   }
 
@@ -433,6 +477,13 @@ class SelectionTrackHorizontal extends SVGTrack {
     // check if we have graphics for this tile,
     // if not, create them, otherwise do some
     // basic initialization
+    console.log('tile:', tile, this.loadedTiles);
+    for (const region of tile.tileData.results) {
+      if (!this.visibleAnnotations[region.anno_uid]) {
+        console.log('region:', region);
+        this.visibleAnnotations[region.anno_uid] = region;
+      }
+    }
     return tile;
   }
 

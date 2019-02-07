@@ -20,23 +20,8 @@ class TileManager {
    * Which tiles have both been fetched and are visible?
    */
   visibleAndFetchedTiles() {
+
     return this.visibleAndFetchedIds().map(x => this.fetchedTiles[x]);
-  }
-
-  /**
-   * Set which tiles are visible right now.
-   *
-   * @param tiles: A set of tiles which will be considered the currently visible
-   * tile positions.
-   */
-  setVisibleTiles(tilePositions) {
-    this.visibleTiles = tilePositions.map(x => ({
-      tileId: this.tileToLocalId(x),
-      remoteId: this.tileToRemoteId(x),
-      mirrored: x.mirrored,
-    }));
-
-    this.visibleTileIds = new Set(this.visibleTiles.map(x => x.tileId));
   }
 
   removeOldTiles() {
@@ -57,6 +42,7 @@ class TileManager {
    */
   refreshTiles() {
     const visibleTiles = this.trackObj.calculateVisibleTiles();
+    console.log('visibleTiles', visibleTiles);
     this.visibleTiles = visibleTiles;
     this.visibleTileIds = new Set(this.visibleTiles.map(x => x.tileId));
 
@@ -117,13 +103,8 @@ class TileManager {
 
     toRemoveIds.forEach((x) => {
       const tileIdStr = x;
-      this.destroyTile(this.fetchedTiles[tileIdStr]);
-
-      if (tileIdStr in this.tileGraphics) {
-        this.pMain.removeChild(this.tileGraphics[tileIdStr]);
-        delete this.tileGraphics[tileIdStr];
-      } else {
-        // console.log('tileIdStr absent:', tileIdStr);
+      if (this.trackObj.destroyTile) {
+        this.trackObj.destroyTile(this.fetchedTiles[tileIdStr]);
       }
 
       delete this.fetchedTiles[tileIdStr];
@@ -161,6 +142,7 @@ class TileManager {
     const fetchedTileIDs = Object.keys(this.fetchedTiles);
     this.renderVersion += 1;
 
+    console.log('fetchedTileIDs', fetchedTileIDs);
     for (let i = 0; i < fetchedTileIDs.length; i++) {
       if (!this.trackObj.tileLoaded(fetchedTileIDs[i])) {
         this.trackObj.initTile(
@@ -222,6 +204,8 @@ class TileManager {
    * response to a request from fetchTiles.
    */
   receivedTiles(loadedTiles) {
+    console.log('loadedTiles:', loadedTiles, this.visibleTiles);
+
     for (let i = 0; i < this.visibleTiles.length; i++) {
       const { tileId } = this.visibleTiles[i];
 
