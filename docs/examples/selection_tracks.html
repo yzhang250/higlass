@@ -31,7 +31,9 @@
       <span>X position:</span> <input id='x-position' type='text' /><br>
       <span>Y position:</span> <input id='y-position' /><br>
       <textarea id="description" rows="5"></textarea><br>
-      <button id="save-button" style="visibility: visible">Save</button><br>
+      <button id="save-button" style="visibility: hidden">Save</button><br>
+      <button id="delete-button" style="visibility: hidden">Delete</button><br>
+
     </div>
 </body>
 <script src='hglib.js'>
@@ -186,6 +188,37 @@ const rangeListenerId = hgv.on(
   }
 );
 
+let selectedRegion = null;
+
+function updateRegion(prevRegion) {
+  let newRegion = prevRegion;
+
+  if (prevRegion.uid) {
+    // we're updating an annotation so add it to the chain
+    // by setting prev_uid to uid and deleting uid so that
+    // it can be reassigned by the server
+    newRegion.prev_uid = prevRegion.uid;
+    delete newRegion.uid;
+  }
+
+  return newRegion;
+}
+
+function saveRegion(savedRegion) {
+  fetch('//localhost:8000/api/v0/annos-1d/', {
+    method: 'POST',
+    body: JSON.stringify(savedRegion),
+    headers: new Headers({
+      'Content-Type': 'application/json'
+    })
+  }).then((response) => {
+    console.log('response', response);
+    return response.json();
+  }).then((jsonResponse) => {
+    console.log('jsonResponse:', jsonResponse);
+  });
+}
+
 d3.select('#save-button')
 .on('click', () => {
   // const viewconf = hgv.getViewConfig();
@@ -196,8 +229,35 @@ d3.select('#save-button')
     // } else {
     //   track.options.savedRegions += [currentRange];
     // }
-    let desc = d3.select('#description');
+    const desc = d3.select('#description');
     console.log('desc.value', desc.node().value);
+
+    const newRegion = updateRegion(selectedRegion);
+    newRegion.description = desc.node().value;
+
+    console.log('newRegion:', newRegion);
+    saveRegion(newRegion);
+
+  // hgv.setViewConfig(viewconf);
+});
+
+d3.select('#delete-button')
+.on('click', () => {
+  // const viewconf = hgv.getViewConfig();
+  // const track = viewconf.views[0].tracks.top[2].contents[1];
+
+    // if (!track.options.savedRegions) {
+    //   track.options.savedRegions = [currentRange];
+    // } else {
+    //   track.options.savedRegions += [currentRange];
+    // }
+    const desc = d3.select('#description');
+    console.log('desc.value', desc.node().value);
+
+    const newRegion = updateRegion(selectedRegion);
+    newRegion.latest = false;
+    console.log('newRegion:', newRegion);
+    saveRegion(newRegion);
 
   // hgv.setViewConfig(viewconf);
 });
@@ -205,33 +265,40 @@ d3.select('#save-button')
 setTimeout(() => {
   const trackObj = hgv.getComponent().getTrackObject('aa', 'selection');
 
-  trackObj.localPubSub.subscribe('track.brushEnded', (savedRegion) => {
-    console.log('savedRegion', savedRegion);
 
-    if (savedRegion.uid) {
-      // we're updating an annotation so add it to the chain
-      // by setting prev_uid to uid and deleting uid so that
-      // it can be reassigned by the server
-      savedRegion.prev_uid = savedRegion.uid;
-      delete savedRegion.uid;
-    }
+  trackObj.localPubSub.subscribe('track.regionSelected', (region) =>{
+    selectedRegion = region;
+
+    console.log('selected:', region);
+
+    d3.select('#save-button')
+      .style('visibility', 'visible');
+    d3.select('#delete-button')
+      .style('visibility', 'visible');
+
+    d3.select('#description')
+      .property('value', region.description);
+  });
+
+  trackObj.localPubSub.subscribe('track.regionUnselected', () => {
+    selectedRegion = null;
+
+    console.log('unselecting');
+    d3.select('#save-button')
+      .style('visibility', 'hidden');
+    d3.select('#delete-button')
+      .style('visibility', 'hidden');
+  });
+
+  trackObj.localPubSub.subscribe('track.brushEnded', (oldRegion) => {
+    console.log('oldRegion', oldRegion);
+    const savedRegion = updateRegion(oldRegion);
+
     savedRegion.x_start = Math.floor(savedRegion.x_start);
     savedRegion.x_end = Math.floor(savedRegion.x_end);
 
-    console.log(JSON.stringify(savedRegion));
-
-    fetch('//localhost:8000/api/v0/annos-1d/', {
-      method: 'POST',
-      body: JSON.stringify(savedRegion),
-      headers: new Headers({
-        'Content-Type': 'application/json'
-      })
-    }).then((response) => {
-      console.log('response', response);
-      return response.json();
-    }).then((jsonResponse) => {
-      console.log('jsonResponse:', jsonResponse);
-    });
+    console.log (JSON.stringify(savedRegion));
+    saveRegion(savedRegion);
     
     // check if this object exists
   });

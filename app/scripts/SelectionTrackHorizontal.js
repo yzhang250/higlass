@@ -210,6 +210,7 @@ class SelectionTrackHorizontal extends SVGTrack {
 
   disableBrush() {
     if (this.gBrush) {
+      this.localPubSub.publish('track.regionUnselected');
       this.selected = null;
       this.selectionXDomain = null;
       this.gBrush.remove();
@@ -384,6 +385,8 @@ class SelectionTrackHorizontal extends SVGTrack {
         this.disableBrush();
         this.selected = d[0].anno_uid;
         this.enableBrush(d[0].anno_uid);
+
+        this.localPubSub.publish('track.regionSelected', d[0]);
 
         event.preventDefault();
         event.stopPropagation();
