@@ -21,10 +21,8 @@ class DragListeningDiv extends React.Component {
   }
 
   render() {
-    // color red if not enabled, green if a track is not top
-    // and red otherwise
-    const background = this.props.enabled
-      ? (this.state.dragOnTop ? 'green' : 'blue') : 'red';
+    // color red if not enabled, green if a track is not top and red otherwise
+    const background = this.props.enabled && this.state.dragOnTop ? 'green' : 'red';
 
     const styleNames = this.props.enabled ? 'drag-listening-div-active' : '';
 
@@ -43,11 +41,10 @@ class DragListeningDiv extends React.Component {
             console.warn('unknown track type:', evtJson);
           }
 
-          const defaultTrackType =
-            DEFAULT_TRACKS_FOR_DATATYPE[evtJson.datatype][this.props.position];
+          const defaultType = DEFAULT_TRACKS_FOR_DATATYPE[evtJson.datatype][this.props.position];
 
           const newTrack = {
-            type: defaultTrackType,
+            type: defaultType,
             uid: slugid.nice(),
             tilesetUid: evtJson.tilesetUid,
             server: evtJson.server,
@@ -75,8 +72,8 @@ DragListeningDiv.defaultProps = {
 
 DragListeningDiv.propTypes = {
   enabled: PropTypes.bool,
-  style: PropTypes.obj,
-  draggingHappening: PropTypes.obj,
+  style: PropTypes.object,
+  draggingHappening: PropTypes.object,
   onTrackDropped: PropTypes.func,
   position: PropTypes.string.isRequired,
 };

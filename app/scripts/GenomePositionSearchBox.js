@@ -187,30 +187,31 @@ class GenomePositionSearchBox extends React.Component {
             genes: []
           });
         } else if (this.changedPart > 0 && !changedAtStartOfWord) {
-            // send out another request for genes with dashes in them
-            // but we need to distinguish things that have a dash in front
-            // from things that just have a space in front
+          // send out another request for genes with dashes in them
+          // but we need to distinguish things that have a dash in front
+          // from things that just have a space in front
 
-            let url1 = `${this.state.autocompleteServer}/suggest/`;
-            url1 += `?d=${this.state.autocompleteId}&ac=`;
-            url1 += `${newParts[this.changedPart-1].toLowerCase()}-${newParts[this.changedPart].toLowerCase()}`;
-            tileProxy.json(url1, (error1, data1) => {
-              if (error1) {
-                this.setState({
-                  loading: false,
-                  genes: data,
-                });
-              } else {
-                this.setState({
-                  loading: false,
-                  genes: data1.concat(data),
-                });
-              }
-            }, this.props.pubSub);
-          } else {
-            // we've received a list of autocomplete suggestions
-            this.setState({ loading: false, genes: data });
-          }
+          const url1 = `${this.state.autocompleteServer}/suggest/`
+            + `?d=${this.state.autocompleteId}`
+            + `&ac=${newParts[this.changedPart - 1].toLowerCase()}`
+            + `-${newParts[this.changedPart].toLowerCase()}`;
+          tileProxy.json(url1, (error1, data1) => {
+            if (error1) {
+              this.setState({
+                loading: false,
+                genes: data,
+              });
+            } else {
+              this.setState({
+                loading: false,
+                genes: data1.concat(data),
+              });
+            }
+          }, this.props.pubSub);
+        } else {
+          // we've received a list of autocomplete suggestions
+          this.setState({ loading: false, genes: data });
+        }
       }, this.props.pubSub);
     }
   }
@@ -501,9 +502,9 @@ class GenomePositionSearchBox extends React.Component {
     for (let i = 0; i < valueParts.length; i++) {
       if (valueParts[i].length === 0) { continue; }
 
-      const [chr, pos, retPos] = this.searchField.parsePosition(valueParts[i]);
+      const retPos = this.searchField.parsePosition(valueParts[i])[2];
 
-      if (retPos === null || isNaN(retPos)) {
+      if (retPos === null || Number.isNaN(+retPos)) {
         // not a chromsome position, let's see if it's a gene name
         const url = `${this.state.autocompleteServer}/suggest/?d=${this.state.autocompleteId}&ac=${valueParts[i].toLowerCase()}`;
         requests.push(tileProxy.json(url, toVoid, this.props.pubSub));
@@ -540,7 +541,9 @@ class GenomePositionSearchBox extends React.Component {
       const searchFieldValue = this.positionText;
 
       if (this.searchField !== null) {
-        let [range1, range2] = this.searchField.searchPosition(searchFieldValue);
+        const rangePair = this.searchField.searchPosition(searchFieldValue);
+        const range1 = rangePair[0];
+        let range2 = rangePair[1];
 
         if (!range1) {
           this.setPositionText(this.origPositionText);
@@ -548,8 +551,8 @@ class GenomePositionSearchBox extends React.Component {
         }
 
         if (
-          (range1 && (isNaN(range1[0]) || isNaN(range1[1])))
-          || (range2 && (isNaN(range2[0]) || isNaN(range2[1])))) {
+          (range1 && (Number.isNaN(+range1[0]) || Number.isNaN(+range1[1])))
+          || (range2 && (Number.isNaN(+range2[0]) || Number.isNaN(+range2[1])))) {
           return;
         }
 
@@ -641,18 +644,16 @@ class GenomePositionSearchBox extends React.Component {
 
   handleRenderMenu(items) {
     return (
-      <PopupMenu
-        children={items}
-      >
+      <PopupMenu>
         <div
-          children={items}
           style={{
             left: this.menuPosition.left,
             top: this.menuPosition.top,
           }}
           styleName="styles.genome-position-search-bar-suggestions"
-        />
-
+        >
+          {items}
+        </div>
       </PopupMenu>
     );
   }
@@ -694,26 +695,27 @@ class GenomePositionSearchBox extends React.Component {
 
     return (
       <FormGroup
+        ref={c => this.gpsbForm = c}
         bsSize="small"
         styleName={className}
-        ref={c => this.gpsbForm = c}
       >
         <DropdownButton
+          ref={c => this.assemblyPickButton = c}
           bsSize="small"
           className={styles['genome-position-search-bar-button']}
           id={this.uid}
           onSelect={this.handleAssemblySelect.bind(this)}
-          ref={c => this.assemblyPickButton = c}
           title={this.state.selectedAssembly ? this.state.selectedAssembly : '(none)'}
         >
           {assemblyMenuItems}
         </DropdownButton>
 
         <Autocomplete
+          ref={c => this.autocompleteMenu = c}
           getItemValue={item => item.geneName}
           inputProps={{
             className: styles['genome-position-search-bar'],
-            title: "Current location: enter a symbol or location to change the position of the current view",
+            title: 'Current location: enter a symbol or location to change the position of the current view',
           }}
           items={this.state.genes}
           menuStyle={{
@@ -727,13 +729,14 @@ class GenomePositionSearchBox extends React.Component {
           onMenuVisibilityChange={this.handleMenuVisibilityChange.bind(this)}
           onSelect={(value, objct) => this.geneSelected(value, objct)}
           onSubmit={this.searchFieldSubmit.bind(this)}
-          ref={c => this.autocompleteMenu = c}
           renderItem={(item, isHighlighted) => (
             <div
-              id={item.refseqid}
               key={item.refseqid}
+              id={item.refseqid}
               style={isHighlighted ? this.styles.highlightedItem : this.styles.item}
-            >{item.geneName}</div>
+            >
+              {item.geneName}
+            </div>
           )}
           renderMenu={this.handleRenderMenu.bind(this)}
           value={this.positionText}
@@ -743,6 +746,7 @@ class GenomePositionSearchBox extends React.Component {
         <button
           onClick={this.buttonClick.bind(this)}
           styleName={classNameButton}
+          type="button"
         >
           <Glyphicon glyph="search" />
         </button>

@@ -119,20 +119,17 @@ class ViewHeader extends React.Component {
           onMenuClosed={() => this.setState({ configMenuUid: null })}
         >
           <ConfigViewMenu
-            orientation="left"
-            position={this.state.configMenuPosition}
-
-            onExportSVG={() => {
+            onClearView={() => {
               this.setState({ configMenuUid: null }); // hide the menu
-              this.props.onExportSVG();
+              this.props.onClearView();
             }}
             onExportPNG={() => {
               this.setState({ configMenuUid: null }); // hide the menu
               this.props.onExportPNG();
             }}
-            onClearView = {() => {
+            onExportSVG={() => {
               this.setState({ configMenuUid: null }); // hide the menu
-              this.props.onClearView();
+              this.props.onExportSVG();
             }}
             onExportViewAsJSON={() => {
               this.setState({ configMenuUid: null }); // hide the menu
@@ -154,13 +151,13 @@ class ViewHeader extends React.Component {
               this.setState({ configMenuUid: null }); // hide the menu
               this.props.onLockZoomAndLocation(this.state.configMenuUid);
             }}
-            onProjectViewport={() => {
-              this.setState({ configMenuUid: null }); // hide the menu
-              this.props.onProjectViewport(this.state.configMenuUid);
-            }}
             onOptionsChanged={(newOptions) => {
               this.props.onViewOptionsChanged(newOptions);
               this.setState({ configMenuUid: null }); // hide the menu
+            }}
+            onProjectViewport={() => {
+              this.setState({ configMenuUid: null }); // hide the menu
+              this.props.onProjectViewport(this.state.configMenuUid);
             }}
             onTakeAndLockZoomAndLocation={() => {
               this.setState({ configMenuUid: null }); // hide the menu
@@ -198,6 +195,8 @@ class ViewHeader extends React.Component {
               this.setState({ configMenuUid: null }); // hide the menu
               this.props.onZoomToData(this.state.configMenuUid);
             }}
+            orientation="left"
+            position={this.state.configMenuPosition}
           />
         </PopupMenu>
       );
@@ -245,12 +244,14 @@ class ViewHeader extends React.Component {
             <div />
           </div>
           {this.state.width > VIEW_HEADER_MIN_WIDTH_SEARCH_BAR
-            && <div styleName="multitrack-header-search">
-              {
-                this.props.isGenomePositionSearchBoxVisible
-                && GenomePositionSearchBox
-              }
-            </div>
+            && (
+              <div styleName="multitrack-header-search">
+                {
+                  this.props.isGenomePositionSearchBoxVisible
+                  && GenomePositionSearchBox
+                }
+              </div>
+            )
           }
         </div>
         <nav styleName="multitrack-header-nav-list">
