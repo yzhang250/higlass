@@ -196,19 +196,17 @@ class HorizontalTiledPlot extends React.Component {
         className="horizontal-tiled-plot"
         styleName="styles.horizontal-tiled-plot"
       >
-        {isBrushable
-          && (
-            <svg
-              ref={(el) => { this.brushEl = select(el); }}
-              style={{
-                height,
-                width: this.props.width,
-              }}
-              styleName={rangeSelectorClass}
-              xmlns="http://www.w3.org/2000/svg"
-            />
-          )
-        }
+        {isBrushable && (
+          <svg
+            ref={(el) => { this.brushEl = select(el); }}
+            style={{
+              height,
+              width: this.props.width,
+            }}
+            styleName={rangeSelectorClass}
+            xmlns="http://www.w3.org/2000/svg"
+          />
+        )}
         <ListWrapper
           className={`${stylesPlot.list} ${stylesPlot.stylizedList}`}
           component={SortableList}

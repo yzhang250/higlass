@@ -1218,14 +1218,14 @@ class TiledPlot extends React.Component {
     }
 
     // set the initial domain
-    const left = this.trackRenderer.currentProps.paddingLeft
+    const left = this.trackRenderer.currentProps.marginLeft
       + this.trackRenderer.currentProps.leftWidth;
     let newXDomain = [
       left,
       left + this.trackRenderer.currentProps.centerWidth,
     ].map(this.trackRenderer.zoomTransform.rescaleX(this.trackRenderer.xScale).invert);
 
-    const top = this.trackRenderer.currentProps.paddingTop
+    const top = this.trackRenderer.currentProps.marginTop
       + this.trackRenderer.currentProps.topHeight;
     let newYDomain = [
       top,
@@ -2015,6 +2015,8 @@ class TiledPlot extends React.Component {
           onTilesetInfoReceived={this.handleTilesetInfoReceived.bind(this)}
           onTrackOptionsChanged={this.handleTrackOptionsChanged.bind(this)}
           onValueScaleChanged={this.props.onValueScaleChanged}
+          paddingLeft={this.props.paddingLeft}
+          paddingTop={this.props.paddingTop}
           pixiStage={this.props.pixiStage}
           pluginTracks={this.props.pluginTracks}
           positionedTracks={positionedTracks}
