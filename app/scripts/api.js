@@ -1,5 +1,5 @@
 import ReactDOM from 'react-dom';
-import createPubSub from 'pub-sub-es';
+import createPubSub, { globalPubSub } from 'pub-sub-es';
 
 import {
   setDarkTheme,
@@ -43,6 +43,41 @@ const createApi = function api(context, pubSub) {
         // it's globally available within the build but not outside. See
         // `plugins` in `webpack.config.js`
         return VERSION;
+      },
+
+      /**
+       * Enable or disable broadcasting the mouse position globally
+       * @param {boolean} isBroadcastMousePositionGlobally - If `true` the mouse
+       *   position will be broadcasted globally.
+       */
+      setBroadcastMousePositionGlobally(isBroadcastMousePositionGlobally = false) {
+        self.isBroadcastMousePositionGlobally = isBroadcastMousePositionGlobally;
+
+        if (
+          self.isBroadcastMousePositionGlobally
+          && !self.broadcastMousePositionGloballyListener
+          && self.animateOnMouseMove
+        ) {
+          self.broadcastMousePositionGloballyListener = globalPubSub.subscribe(
+            'higlass.mouseMove', self.animateOnGlobalEventBound
+          );
+          self.pubSubs.push(self.broadcastMousePositionGloballyListener);
+        }
+
+        if (
+          self.isBroadcastMousePositionGlobally
+          && !self.broadcastMousePositionGloballyListener
+        ) {
+          const index = self.pubSubs.findIndex(
+            listener => listener === self.broadcastMousePositionGloballyListener
+          );
+
+          globalPubSub.unsubscribe(self.broadcastMousePositionGloballyListener);
+
+          if (index >= 0) self.pubSubs.splice(index, 1);
+
+          self.broadcastMousePositionGloballyListener = undefined;
+        }
       },
 
       /**

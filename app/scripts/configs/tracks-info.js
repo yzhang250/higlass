@@ -94,6 +94,7 @@ export const TRACKS_INFO = [
       trackBorderColor: 'black',
       heatmapValueScaling: 'log',
       showMousePosition: false,
+      showGlobalMousePosition: false,
       mousePositionColor: '#999999',
       showTooltip: false,
     },
@@ -115,6 +116,7 @@ export const TRACKS_INFO = [
       'trackBorderColor',
       'heatmapValueScaling',
       'showMousePosition',
+      'showGlobalMousePosition',
       'mousePositionColor',
       'showTooltip',
     ],
@@ -230,6 +232,7 @@ export const TRACKS_INFO = [
       'trackBorderColor',
       'trackType',
       'showMousePosition',
+      'showGlobalMousePosition',
       'showTooltip',
       'mousePositionColor',
       'aggregationMode'
@@ -250,6 +253,7 @@ export const TRACKS_INFO = [
       trackBorderColor: 'black',
       labelTextOpacity: 0.4,
       showMousePosition: false,
+      showGlobalMousePosition: false,
       mousePositionColor: '#999999',
       showTooltip: false,
     },
@@ -277,6 +281,7 @@ export const TRACKS_INFO = [
       'trackBorderColor',
       'trackType',
       'showMousePosition',
+      'showGlobalMousePosition',
       'showTooltip',
       'mousePositionColor',
       'aggregationMode'
@@ -297,6 +302,7 @@ export const TRACKS_INFO = [
       trackBorderColor: 'black',
       labelTextOpacity: 0.4,
       showMousePosition: false,
+      showGlobalMousePosition: false,
       mousePositionColor: '#999999',
       showTooltip: false,
     },
@@ -324,6 +330,7 @@ export const TRACKS_INFO = [
       'trackBorderColor',
       'trackType',
       'showMousePosition',
+      'showGlobalMousePosition',
       'showTooltip',
       'mousePositionColor',
       'aggregationMode'
@@ -344,6 +351,7 @@ export const TRACKS_INFO = [
       trackBorderColor: 'black',
       labelTextOpacity: 0.4,
       showMousePosition: false,
+      showGlobalMousePosition: false,
       mousePositionColor: '#999999',
       showTooltip: false,
     },
@@ -522,6 +530,7 @@ export const TRACKS_INFO = [
       'trackBorderWidth',
       'trackBorderColor',
       'showMousePosition',
+      'showGlobalMousePosition',
       'showTooltip',
       'mousePositionColor',
       'aggregationMode'
@@ -542,6 +551,7 @@ export const TRACKS_INFO = [
       trackBorderColor: 'black',
       labelTextOpacity: 0.4,
       showMousePosition: false,
+      showGlobalMousePosition: false,
       showTooltip: false,
       mousePositionColor: '#999999'
     },
@@ -656,6 +666,7 @@ export const TRACKS_INFO = [
       'trackBorderColor',
       'barOpacity',
       'showMousePosition',
+      'showGlobalMousePosition',
       'showTooltip',
       'aggregationMode'
     ],
@@ -705,6 +716,7 @@ export const TRACKS_INFO = [
       'trackBorderColor',
       'barOpacity',
       'showMousePosition',
+      'showGlobalMousePosition',
       'showTooltip',
       'aggregationMode'
     ],
@@ -955,6 +967,7 @@ export const TRACKS_INFO = [
       'trackBorderWidth',
       'trackBorderColor',
       'showMousePosition',
+      'showGlobalMousePosition',
       'mousePositionColor',
       'fontSize',
       'geneAnnotationHeight',
@@ -974,6 +987,7 @@ export const TRACKS_INFO = [
       trackBorderWidth: 0,
       trackBorderColor: 'black',
       showMousePosition: false,
+      showGlobalMousePosition: false,
       mousePositionColor: '#999999',
       geneAnnotationHeight: 10,
       geneLabelPosition: 'outside',
@@ -1003,6 +1017,7 @@ export const TRACKS_INFO = [
       'trackBorderWidth',
       'trackBorderColor',
       'showMousePosition',
+      'showGlobalMousePosition',
       'mousePositionColor',
       'fontSize',
       'geneAnnoHeight',
@@ -1022,6 +1037,7 @@ export const TRACKS_INFO = [
       trackBorderWidth: 0,
       trackBorderColor: 'black',
       showMousePosition: false,
+      showGlobalMousePosition: false,
       mousePositionColor: '#999999',
       geneAnnoHeight: 10,
       geneLabelPosition: 'outside',
@@ -1317,6 +1333,7 @@ export const TRACKS_INFO = [
       lineStrokeWidth: 1,
       lineStrokeColor: 'grey',
       showMousePosition: false,
+      showGlobalMousePosition: false,
     },
   },
   {
@@ -1336,6 +1353,7 @@ export const TRACKS_INFO = [
       lineStrokeWidth: 1,
       lineStrokeColor: 'grey',
       showMousePosition: false,
+      showGlobalMousePosition: false,
     },
   },
   {
@@ -1385,6 +1403,7 @@ export const TRACKS_INFO = [
       'fontSize',
       'fontIsAligned',
       'showMousePosition',
+      'showGlobalMousePosition',
       'mousePositionColor',
     ],
     defaultOptions: {
@@ -1393,6 +1412,7 @@ export const TRACKS_INFO = [
       fontSize: 12,
       fontIsAligned: false,
       showMousePosition: false,
+      showGlobalMousePosition: false,
       mousePositionColor: '#999999'
     },
   },
@@ -1410,6 +1430,7 @@ export const TRACKS_INFO = [
       'fontSize',
       'fontIsAligned',
       'showMousePosition',
+      'showGlobalMousePosition',
       'mousePositionColor',
     ],
     defaultOptions: {
@@ -1418,6 +1439,7 @@ export const TRACKS_INFO = [
       fontSize: 12,
       fontIsAligned: false,
       showMousePosition: false,
+      showGlobalMousePosition: false,
       mousePositionColor: '#999999'
     },
   },
