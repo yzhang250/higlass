@@ -1,3 +1,7 @@
+## v1.5.0
+
+- Added ability to define label margins. See [`docs/examples/viewconfs/label-margin.json`](docs/examples/viewconfs/label-margin.json) for an example.
+
 ## v1.4.2
 
 - Fix #568, #569
@@ -36,6 +40,7 @@
 - Added TiledPixiTrack.on event handler
 - Added getTrackObject to exports
 - Added support for overlay tracks
+- Minor bug fix wherein valueScaleMin and valueScaleMax weren't used when set to 0
 - Added support for click event handling of 1D and 2D annotations from `1d-annotation` and `chromosome-2d-annotations` tracks
 - Cloned views split vertically first (#259)
 - Change component height when a new viewconf is passed in
