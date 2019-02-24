@@ -2001,7 +2001,8 @@ class TiledPlot extends React.Component {
           initialXDomain={this.props.initialXDomain}
           initialYDomain={this.props.initialYDomain}
           isRangeSelection={this.props.mouseTool === MOUSE_TOOL_SELECT}
-          leftWidth={this.leftWidth}
+          isRisShowGlobalMousePosition={this.props.isShowGlobalMousePosition}
+leftWidth={this.leftWidth}
           leftWidthNoGallery={this.leftWidthNoGallery}
           metaTracks={this.props.metaTracks}
           onMouseMoveZoom={this.props.onMouseMoveZoom}
@@ -2235,6 +2236,7 @@ class TiledPlot extends React.Component {
 }
 
 TiledPlot.defaultProps = {
+  isShowGlobalMousePosition: false,
   pluginTracks: {},
   metaTracks: [],
   zoomable: true,
@@ -2249,15 +2251,16 @@ TiledPlot.propTypes = {
   editable: PropTypes.bool,
   initialXDomain: PropTypes.array,
   initialYDomain: PropTypes.array,
+  isShowGlobalMousePosition: PropTypes.bool,
   marginBottom: PropTypes.number.isRequired,
   marginLeft: PropTypes.number.isRequired,
   marginRight: PropTypes.number.isRequired,
   marginTop: PropTypes.number.isRequired,
+  metaTracks: PropTypes.array,
   paddingBottom: PropTypes.number.isRequired,
   paddingLeft: PropTypes.number.isRequired,
   paddingRight: PropTypes.number.isRequired,
   paddingTop: PropTypes.number.isRequired,
-  metaTracks: PropTypes.array,
   mouseTool: PropTypes.string,
   onCloseTrack: PropTypes.func,
   onDataDomainChanged: PropTypes.func,
