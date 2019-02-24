@@ -3849,7 +3849,7 @@ class HiGlassComponent extends React.Component {
 
         // Custom props
         cols={12}
-        containerPadding={[this.containingPaddingX, this.containingPaddingY]}
+        containerPadding={[this.containerPaddingX, this.containerPaddingY]}
         draggableHandle={`.${stylesMTHeader['multitrack-header-grabber']}`}
         isDraggable={this.isEditable()}
         isResizable={this.isEditable()}
