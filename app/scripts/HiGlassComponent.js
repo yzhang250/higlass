@@ -168,11 +168,11 @@ class HiGlassComponent extends React.Component {
       ? +props.options.viewPaddingRight
       : DEFAULT_VIEW_PADDING;
 
-    this.containingPaddingX = +props.options.containingPaddingX >= 0
-      ? +props.options.containingPaddingX
+    this.containerPaddingX = +props.options.containerPaddingX >= 0
+      ? +props.options.containerPaddingX
       : DEFAULT_CONTAINER_PADDING_X;
-    this.containingPaddingY = +props.options.containingPaddingY >= 0
-      ? +props.options.containingPaddingY
+    this.containerPaddingY = +props.options.containerPaddingY >= 0
+      ? +props.options.containerPaddingY
       : DEFAULT_CONTAINER_PADDING_Y;
 
     this.genomePositionSearchBox = null;
