@@ -1,6 +1,8 @@
 ## v1.5.0
 
 - Add a new option to tracks that support axis: `axisMargin` to add some margin to an axis. See [docs/examples/viewconfs/axis-margin.json](docs/examples/viewconfs/axis-margin.json) for an example
+- Fixed an issue preventing `hgApi.setTrackValueScaleLimits` from setting `0` as a value scale limit.
+- Fixed an issue where bars in a `BarTrack` related to values higher than `valueScaleMax` were not drawn.
 
 ## v1.4.2
 
