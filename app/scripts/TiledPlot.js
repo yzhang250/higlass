@@ -2262,6 +2262,7 @@ TiledPlot.propTypes = {
   paddingRight: PropTypes.number.isRequired,
   paddingTop: PropTypes.number.isRequired,
   mouseTool: PropTypes.string,
+  noTrackMenu: PropTypes.bool,
   onCloseTrack: PropTypes.func,
   onDataDomainChanged: PropTypes.func,
   onLockValueScale: PropTypes.func,

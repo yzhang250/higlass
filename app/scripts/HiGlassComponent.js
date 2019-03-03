@@ -3673,6 +3673,7 @@ class HiGlassComponent extends React.Component {
             marginTop={this.viewMarginTop}
             metaTracks={view.metaTracks}
             mouseTool={this.state.mouseTool}
+            noTrackMenu={this.props.options.noTrackMenu}
             onChangeTrackData={(trackId, newData) => (
               this.handleChangeTrackData(view.uid, trackId, newData))}
             onChangeTrackType={(trackId, newType) => (

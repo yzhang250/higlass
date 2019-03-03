@@ -81,6 +81,8 @@ fixed height
 
 - ``globalMousePosition``: if ``true`` this will turn on ``broadcastMousePositionGlobally`` and ``showGlobalMousePosition``. This is basically a convenience option to quickly broadcast and show global mouse positions.
 
+- ``noTrackMenu``: if ``true`` the context menu is disabled.
+
 The function returns an instance of the public API of a HiGlass component.
 
 A full example of an inline HiGlass component can be found in the `HiGlass
