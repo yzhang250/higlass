@@ -784,12 +784,26 @@ class HiGlassComponent extends React.Component {
    * visible?
    */
   isEditable() {
-    // console.log('editable:', this.props.options, this.state.viewConfig);
     if (!this.props.options || !('editable' in this.props.options)) {
       return this.state.viewConfig.editable;
     }
 
     return this.props.options.editable && this.state.viewConfig.editable;
+  }
+
+  /**
+   * Can views be added, removed or rearranged and are the view headers
+   * visible?
+   */
+  isTrackMenuDisabled() {
+    const fromOptions = this.props.options && this.props.options.disableTrackMenu;
+    const fromViewconf = this.state.viewConfig && this.state.viewConfig.disableTrackMenu;
+
+    if (!this.props.options || !('disableTrackMenu' in this.props.options)) {
+      return fromViewconf;
+    }
+
+    return fromOptions || fromViewconf;
   }
 
   /**
@@ -3655,6 +3669,7 @@ class HiGlassComponent extends React.Component {
                 : null
             }
             chromInfoPath={view.chromInfoPath}
+            disableTrackMenu={this.isTrackMenuDisabled()}
             draggingHappening={this.state.draggingHappening}
             editable={this.isEditable()}
             initialXDomain={view.initialXDomain}
@@ -3666,7 +3681,6 @@ class HiGlassComponent extends React.Component {
             marginTop={this.viewMarginTop}
             metaTracks={view.metaTracks}
             mouseTool={this.state.mouseTool}
-            noTrackMenu={this.props.options.noTrackMenu}
             onChangeTrackData={(trackId, newData) => (
               this.handleChangeTrackData(view.uid, trackId, newData))}
             onChangeTrackType={(trackId, newType) => (
