@@ -8,6 +8,7 @@
 - Allow disabling the track menu by adding `noTrackMenu: true` to the options when calling `hglib.viewer()`.
 - Fixed an issue preventing `hgApi.setTrackValueScaleLimits` from setting `0` as a value scale limit.
 - Fixed an issue where bars in a `BarTrack` related to values higher than `valueScaleMax` were not drawn.
+- Fix #291
 
 ## v1.4.2
 
