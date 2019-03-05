@@ -1561,7 +1561,7 @@ class HiGlassComponent extends React.Component {
 
     const MARGIN_HEIGHT = this.isEditable() ? 10 : 0;
 
-    const marginHeight = (MARGIN_HEIGHT * maxHeight) - 1;
+    const marginHeight = Math.max(0, (MARGIN_HEIGHT * maxHeight) - 1);
     const availableHeight = height - marginHeight;
 
     // const currentRowHeight = this.state.rowHeight;
