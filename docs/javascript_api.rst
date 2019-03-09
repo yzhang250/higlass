@@ -61,9 +61,7 @@ try to fetch a remote viewconfig.
 
 The ``options`` parameter can have the following properties:
 
-- ``bounded``: tells the HiGlass component to fill all the space in the containing
-element. Note that if ``bounded`` is set to true, then ``element`` must have a
-fixed height
+- ``bounded``: tells the HiGlass component to fill all the space in the containing element. Note that if ``bounded`` is set to true, then ``element`` must have a fixed height
 
 - ``pixelPreciseMarginPadding``: if ``true`` apply pixel precise view height, padding, and margin.
 
@@ -73,15 +71,11 @@ fixed height
 
 - ``viewPaddingTop``, ``viewPaddingBottom``, ``viewPaddingLeft``, and ``viewPaddingRight``: top, bottom, left, right padding between **views** in pixels. The padding area *is interactive*, i.e., dragging on the margin area *will change* the location of the view!
 
-- ``bounded``: property which tells the HiGlass component to fill all the space in the containing element. Note that if ``bounded`` is set to true, then ``element`` must have a fixed height.
-
 - ``broadcastMousePositionGlobally``: if ``true`` the relative mouse position of this HiGlass instances (in data coordinates) will be broadcasted globally. This allows you to show the global mouse position in another HiGlass instance within the same browser tab or another browser tab.
 
 - ``showGlobalMousePosition``: if ``true`` any globally broadcasted mouse position will be shown for all tracks that have ``options.showMousePosition = true``.
 
 - ``globalMousePosition``: if ``true`` this will turn on ``broadcastMousePositionGlobally`` and ``showGlobalMousePosition``. This is basically a convenience option to quickly broadcast and show global mouse positions.
-
-- ``disableTrackMenu``: if ``true`` the context menu is disabled.
 
 The function returns an instance of the public API of a HiGlass component.
 

@@ -1,15 +1,15 @@
 ## v1.5.0
 
-- Added ability to define label margins. See [`docs/examples/viewconfs/label-margin.json`](docs/examples/viewconfs/label-margin.json) for an example.
-- Add a new option to tracks that support axis: `axisMargin` to add some margin to an axis. See [docs/examples/viewconfs/axis-margin.json](docs/examples/viewconfs/axis-margin.json) for an example
 - Allow sharing the mouse position globally. See [`docs/examples/others/global-mouse-position.html`](docs/examples/others/global-mouse-position.html) for an example.
+- Allow disabling the change of views and tracks separately by setting `viewEditable: false` and `tracksEditable: false` in your view config.
+- Added ability to define label margins. See [`docs/examples/viewconfs/label-margin.json`](docs/examples/viewconfs/label-margin.json) for an example.
 - Make view spacing adjustable via initialization options. See [/docs/examples/others/adjust-view-spacing.html](/docs/examples/others/adjust-view-spacing.html) for an example.
 - Add a new option to tracks that support axis: `axisMargin` to add some margin to an axis. See [docs/examples/viewconfs/axis-margin.json](docs/examples/viewconfs/axis-margin.json) for an example
-- Allow disabling the track menu by adding `noTrackMenu: true` to the options when calling `hglib.viewer()`.
-- Add a new option to BarTrack for drawing bars with a min. height at positions where the value is zero. See [`/apis/svg.html?/viewconfs/bar-min-height-at-zero.json`](/apis/svg.html?/viewconfs/bar-min-height-at-zero.json) for an example.
+- Add a new option to BarTrack for drawing a demarcation line at the bottom of the track, i.e., at the zero value. See [`/apis/svg.html?/viewconfs/bar-zero-line.json`](/apis/svg.html?/viewconfs/bar-zero-line.json) for an example.
 - Fixed an issue preventing `hgApi.setTrackValueScaleLimits` from setting `0` as a value scale limit.
-- Fixed an issue where bars in a `BarTrack` related to values higher than `valueScaleMax` were not drawn.
-- Fix #291
+- Fix an issue with small offsets when exporting bar tracks to SVG
+- Fix #291: allow web page scrolling when zoomFixed is set to true
+- Fix #578: BarTrack SVG export overplotting error.
 
 ## v1.4.2
 

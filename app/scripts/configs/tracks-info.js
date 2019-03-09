@@ -658,8 +658,9 @@ export const TRACKS_INFO = [
       'showMousePosition',
       'showTooltip',
       'aggregationMode',
-      'barMinHeightAtZero',
-      'barMinHeightAtZeroOpacity'
+      'zeroLineVisible',
+      'zeroLineColor',
+      'zeroLineOpacity',
     ],
     defaultOptions: {
       align: 'bottom',
