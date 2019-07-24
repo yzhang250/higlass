@@ -1,3 +1,4 @@
+dist: xenial
 language: node_js
 node_js:
 - '9'
@@ -9,8 +10,6 @@ before_install:
     # Make sure we have a version which supports "npm ci".
     # https://github.com/travis-ci/travis-ci/issues/4653#issuecomment-379397837
     - dpkg --compare-versions `npm -v` ge 6.5.0 || npm i -g npm@^6.5.0
-install:
-    - npm install -g xvfb-maybe
 services:
     - xvfb
 before_script:
@@ -19,7 +18,7 @@ before_script:
     - npm install -g jsdoc
     - npm clean-install
 script:
-    - ./travis_build_test.sh
+    - xvfb-run ./travis_build_test.sh
 before_deploy:
     - wget http://repo.continuum.io/miniconda/Miniconda3-4.3.21-Linux-x86_64.sh -O miniconda.sh
     - bash miniconda.sh -b -f -p $HOME/miniconda
