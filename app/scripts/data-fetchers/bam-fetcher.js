@@ -1,6 +1,10 @@
 import slugid from 'slugid';
 import ChromosomeInfo from '../ChromosomeInfo';
 
+const getAlignments = (bamUrl, chromName, start, end) => {
+
+};
+
 class BAMDataFetcher {
   constructor(dataConfig) {
     this.dataConfig = dataConfig;
@@ -12,6 +16,7 @@ class BAMDataFetcher {
     });
 
     this.dataPromise.then((chromInfo) => {
+      this.chromInfo = chromInfo;
       console.log('chromInfo:', chromInfo);
     });
   }
@@ -30,8 +35,6 @@ class BAMDataFetcher {
         max_pos: [chromInfo.totalLength],
       };
 
-      console.log('retVal:', retVal);
-
       if (callback) {
         callback(retVal);
       }
@@ -41,11 +44,75 @@ class BAMDataFetcher {
   }
 
   fetchTilesDebounced(receivedTiles, tileIds) {
-    return 0;
+    const tiles = {};
+
+    const validTileIds = [];
+    const tilePromises = [];
+
+    for (const tileId of tileIds) {
+      const parts = tileId.split('.');
+      const z = parseInt(parts[0], 10);
+      const x = parseInt(parts[1], 10);
+
+      if (Number.isNaN(x) || Number.isNaN(z)) {
+        console.warn('Invalid tile zoom or position:', z, x);
+        continue;
+      }
+
+      validTileIds.push(tileId);
+      tilePromises.push(this.tile(z, x));
+    }
+
+    Promise.all(tilePromises).then((values) => {
+      for (let i = 0; i < values.length; i++) {
+        const validTileId = validTileIds[i];
+        tiles[validTileId] = values[i];
+        tiles[validTileId].tilePositionId = validTileId;
+      }
+
+      receivedTiles(tiles);
+    });
+    // tiles = tileResponseToData(tiles, null, tileIds);
+    return tiles;
   }
 
   tile(z, x) {
-    return 0;
+    return this.tilesetInfo().then((tsInfo) => {
+      const tileWidth = +tsInfo.max_width / 2 ** (+z);
+
+      // get the bounds of the tile
+      const minX = tsInfo.min_pos[0] + x * tileWidth;
+      const maxX = tsInfo.min_pos[0] + (x + 1) * tileWidth;
+
+      const chromLengths = this.chromInfo.chromLengths;
+      const cumPositions = this.chromInfo.cumPositions;
+
+      let alignments = [];
+
+      for (let i = 0; i < cumPositions.length; i++) {
+        const chromName = cumPositions[i].chrom;
+        const chromStart = cumPositions[i].pos;
+        const chromEnd = cumPositions[i].pos + chromLengths[chromName];
+
+
+        if (chromStart <= minX
+          && minX <= chromEnd) {
+          // found the start position
+
+          if (i === cumPositions.length - 1) {
+            // last chromosome
+            if (maxX > chromEnd) {
+              alignments = alignments.concat(
+                getAlignments(this.dataConfig.url, chromName,
+                  minX - chromStart, maxX - chromStart)
+              );
+            }
+          }
+        }
+      }
+
+      return [];
+    });
   }
 }
 
