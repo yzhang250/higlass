@@ -2,10 +2,6 @@ dist: xenial
 language: node_js
 node_js:
 - '9'
-addons:
-  apt:
-    packages:
-      - xvfb
 before_install:
     # Make sure we have a version which supports "npm ci".
     # https://github.com/travis-ci/travis-ci/issues/4653#issuecomment-379397837
