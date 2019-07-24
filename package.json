@@ -45,6 +45,7 @@
     "react-dom": "^16.6.3"
   },
   "dependencies": {
+    "@gmod/bam": "^1.0.20",
     "ajv": "^6.10.0",
     "box-intersect": "^1.0.1",
     "css-element-queries": "github:marcj/css-element-queries",

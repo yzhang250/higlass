@@ -1,9 +1,27 @@
 import slugid from 'slugid';
+import { BamFile } from '@gmod/bam';
 import ChromosomeInfo from '../ChromosomeInfo';
 
 const getAlignments = (bamUrl, chromName, start, end) => {
 
 };
+
+const t = new BamFile({
+  bamUrl: 'https://pkerp.s3.amazonaws.com/public/bamfile_test/SRR1770413.sorted.bam',
+});
+
+t.getHeader()
+  .then((header) => {
+    console.log('header:', header);
+    t.getRecordsForRange('Chromosome', 0, 1000)
+      .then((records) => {
+        for (let i = 0; i < 2; i++) {
+          console.log('records[i]', records[i].get('seq'));
+        }
+        console.log('records:', records);
+      });
+  });
+
 
 class BAMDataFetcher {
   constructor(dataConfig) {
