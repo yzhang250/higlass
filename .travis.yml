@@ -5,7 +5,7 @@ before_script:
     - export CHROME_BIN=chromium-browser
     - npm install --quiet -g gulp
     - npm install -g jsdoc
-    - npm nstall
+    - npm install
 script:
     - xvfb-run ./travis_build_test.sh
 before_deploy:
