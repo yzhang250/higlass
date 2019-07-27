@@ -82,3 +82,4 @@ export {
   mountHGComponent,
   removeHGComponent,
 } from './test-helpers';
+export { default as trackUtils } from './track-utils';

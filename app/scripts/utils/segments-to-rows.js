@@ -1,5 +1,37 @@
 import IntervalTree from './interval-tree';
 
+function currTime() {
+  const d = new Date();
+  return d.getTime();
+}
+
+function segmentsToRows2(segments) {
+  const t1 = currTime();
+  segments.sort((a, b) => a.from - b.from);
+  const rows = [];
+
+  while (segments.length) {
+    const row = [];
+    let ix = 0;
+
+    while (ix < segments.length) {
+      if (row.length === 0
+        || row[row.length - 1].to < segments[ix].from) {
+        row.push(segments[ix]);
+        segments.splice(ix, 1);
+      } else {
+        ix++;
+      }
+    }
+
+    rows.push(row);
+  }
+
+  // console.log('rows:', rows);
+  console.log('time:', currTime() - t1);
+  return rows;
+}
+
 function segmentsToRows(segments) {
   /**
        * Partition a list of segments into an array of
@@ -10,6 +42,9 @@ function segmentsToRows(segments) {
        *          non-overlapping rows of segments
        */
   // sort by the length of each segment
+  return segmentsToRows2(segments);
+
+  const t1 = currTime();
   segments.sort((a, b) => (b.to - b.from) - (a.to - a.from));
 
   const rows = [[]];
@@ -42,6 +77,7 @@ function segmentsToRows(segments) {
     }
   }
 
+  console.log('time:', currTime() - t1);
   return rows;
 }
 

@@ -2,10 +2,6 @@ import slugid from 'slugid';
 import { BamFile } from '@gmod/bam';
 import ChromosomeInfo from '../ChromosomeInfo';
 
-const getAlignments = (bamUrl, chromName, start, end) => {
-
-};
-
 // const t = new BamFile({
 //   bamUrl: 'https://pkerp.s3.amazonaws.com/public/bamfile_test/SRR1770413.sorted.bam',
 // });
@@ -21,7 +17,10 @@ const getAlignments = (bamUrl, chromName, start, end) => {
 //         console.log('records:', records);
 //       });
 //   });
-
+const bamRecordToJson = bamRecord => ({
+  from: +bamRecord.data.start,
+  to: +bamRecord.data.end,
+});
 
 class BAMDataFetcher {
   constructor(dataConfig) {
@@ -36,17 +35,25 @@ class BAMDataFetcher {
       ChromosomeInfo(dataConfig.chromSizesUrl, resolve);
     });
 
-    Promise.all([this.dataPromise, this.bamFile])
-      .then((values) => {
-        // we need to load the headers for the bam file but we don't
-        // need to store them anywhere
-        this.chromInfo = values[0];
-      });
+    this.bamHeader = this.bamFile.getHeader().then((header) => {
+      console.log('header', header);
+    });
+
+    // Promise.all([this.dataPromise, this.bamHeader])
+    //   .then((values) => {
+    //     // we need to load the headers for the bam file but we don't
+    //     // need to store them anywhere
+    //     this.chromInfo = values[0];
+
+    //     console.log('chromInfo:', this.chromInfo);
+    //   });
   }
 
   tilesetInfo(callback) {
-    return this.dataPromise.then((chromInfo) => {
+    return Promise.all([this.dataPromise, this.bamHeader]).then((values) => {
       const TILE_SIZE = 1024;
+      const chromInfo = values[0];
+      this.chromInfo = chromInfo;
 
       const retVal = {
         tile_size: TILE_SIZE,
@@ -89,6 +96,7 @@ class BAMDataFetcher {
     Promise.all(tilePromises).then((values) => {
       for (let i = 0; i < values.length; i++) {
         const validTileId = validTileIds[i];
+        console.log('values[i]', values[i]);
         tiles[validTileId] = values[i];
         tiles[validTileId].tilePositionId = validTileId;
       }
@@ -111,10 +119,8 @@ class BAMDataFetcher {
       const chromLengths = this.chromInfo.chromLengths;
       const cumPositions = this.chromInfo.cumPositions;
 
-      const alignments = [];
-
       for (let i = 0; i < cumPositions.length; i++) {
-        const chromName = cumPositions[i].chrom;
+        const chromName = cumPositions[i].chr;
         const chromStart = cumPositions[i].pos;
 
         console.log('cumPoss:', cumPositions[i]);
@@ -134,17 +140,22 @@ class BAMDataFetcher {
             recordPromises.push(
               this.bamFile.getRecordsForRange(
                 chromName, minX - chromStart, chromEnd - chromStart
-              )
+              ).then(records => records.map(rec => bamRecordToJson(rec)))
             );
 
             // continue onto the next chromosome
             minX = chromEnd;
           } else {
+            const endPos = Math.ceil(maxX - chromStart);
+            const startPos = Math.floor(minX - chromStart);
+            console.log('chromName:', chromName, startPos, endPos);
             // the end of the region is within this chromosome
             recordPromises.push(
               this.bamFile.getRecordsForRange(
-                chromName, minX - chromStart, maxX - chromStart
-              )
+                chromName, startPos, endPos
+              ).then(records =>
+                // console.log('records:', records);
+                records.map(rec => bamRecordToJson(rec)))
             );
 
             // end the loop because we've retrieved the last chromosome
@@ -154,7 +165,10 @@ class BAMDataFetcher {
       }
 
       console.log('recordPromises:', recordPromises);
-      return Promise.all(recordPromises);
+      // flatten the array of promises so that it looks like we're
+      // getting one long list of value
+      return Promise.all(recordPromises)
+        .then(values => values.flat());
     });
   }
 }

@@ -53,6 +53,7 @@ import CrossRule from './CrossRule';
 
 import OSMTilesTrack from './OSMTilesTrack';
 import OSMTileIdsTrack from './OSMTileIdsTrack';
+import PileupTrack from './PileupTrack';
 import MapboxTilesTrack from './MapboxTilesTrack';
 import RasterTilesTrack from './RasterTilesTrack';
 
@@ -1493,6 +1494,9 @@ class TrackRenderer extends React.Component {
 
       case 'osm-2d-tile-ids':
         return new OSMTileIdsTrack(context, options);
+
+      case 'pileup':
+        return new PileupTrack(context, options);
 
       case 'mapbox':
       case 'mapbox-tiles':
