@@ -23,6 +23,7 @@ function segmentsToRows2(segments) {
         ix++;
       }
     }
+    
 
     rows.push(row);
   }
