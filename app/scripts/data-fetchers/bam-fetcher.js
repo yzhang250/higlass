@@ -18,6 +18,7 @@ import ChromosomeInfo from '../ChromosomeInfo';
 //       });
 //   });
 const bamRecordToJson = bamRecord => ({
+  id: bamRecord._id,
   from: +bamRecord.data.start,
   to: +bamRecord.data.end,
 });
@@ -35,9 +36,7 @@ class BAMDataFetcher {
       ChromosomeInfo(dataConfig.chromSizesUrl, resolve);
     });
 
-    this.bamHeader = this.bamFile.getHeader().then((header) => {
-      console.log('header', header);
-    });
+    this.bamHeader = this.bamFile.getHeader();
 
     // Promise.all([this.dataPromise, this.bamHeader])
     //   .then((values) => {
@@ -96,7 +95,6 @@ class BAMDataFetcher {
     Promise.all(tilePromises).then((values) => {
       for (let i = 0; i < values.length; i++) {
         const validTileId = validTileIds[i];
-        console.log('values[i]', values[i]);
         tiles[validTileId] = values[i];
         tiles[validTileId].tilePositionId = validTileId;
       }
@@ -123,12 +121,12 @@ class BAMDataFetcher {
         const chromName = cumPositions[i].chr;
         const chromStart = cumPositions[i].pos;
 
-        console.log('cumPoss:', cumPositions[i]);
-        console.log('chromName:', chromName, 'chromLenghts:', chromLengths);
+        // console.log('cumPoss:', cumPositions[i]);
+        // console.log('chromName:', chromName, 'chromLenghts:', chromLengths);
         const chromEnd = cumPositions[i].pos + chromLengths[chromName];
 
-        console.log('minX:', minX, 'maxX', maxX);
-        console.log('chromStart', chromStart, 'chromEnd:', chromEnd);
+        // console.log('minX:', minX, 'maxX', maxX);
+        // console.log('chromStart', chromStart, 'chromEnd:', chromEnd);
         if (chromStart <= minX
           && minX < chromEnd) {
           // start of the visible region is within this chromosome
@@ -148,13 +146,13 @@ class BAMDataFetcher {
           } else {
             const endPos = Math.ceil(maxX - chromStart);
             const startPos = Math.floor(minX - chromStart);
-            console.log('chromName:', chromName, startPos, endPos);
+            // console.log('chromName:', chromName, startPos, endPos);
             // the end of the region is within this chromosome
             recordPromises.push(
               this.bamFile.getRecordsForRange(
                 chromName, startPos, endPos
               ).then(records =>
-                // console.log('records:', records);
+              // console.log('records:', records);
                 records.map(rec => bamRecordToJson(rec)))
             );
 
@@ -164,7 +162,7 @@ class BAMDataFetcher {
         }
       }
 
-      console.log('recordPromises:', recordPromises);
+      // console.log('recordPromises:', recordPromises);
       // flatten the array of promises so that it looks like we're
       // getting one long list of value
       return Promise.all(recordPromises)

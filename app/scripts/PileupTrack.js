@@ -1,8 +1,71 @@
-import { scaleBand } from 'd3-scale';
+import { scaleBand, scaleLinear } from 'd3-scale';
 import { range } from 'd3-array';
+import * as PIXI from 'pixi.js';
 import Tiled1DPixiTrack from './Tiled1DPixiTrack';
 import { trackUtils, segmentsToRows } from './utils';
 
+
+function currTime() {
+  const d = new Date();
+  return d.getTime();
+}
+
+const drawSegments = (segmentList, graphics, xScale, position, dimensions) => {
+  const t1 = currTime();
+
+  const numSegments = segmentList.length;
+  const rows = segmentsToRows(segmentList);
+  const d = range(0, rows.length);
+  const r = [position[1], position[1] + dimensions[1]];
+  const yScale = scaleBand().domain(d).range(r);
+
+  const g = graphics;
+
+  g.clear();
+  g.lineStyle(1, 0x000000);
+
+  rows.map((row, i) => {
+    row.map((segment, j) => {
+      const from = xScale(segment.from);
+      const to = xScale(segment.to);
+
+      // console.log('from:', from, 'to:', to);
+      // console.log('yScale(i)', yScale(i), yScale.bandwidth());
+
+      g.beginFill(0xffffff);
+      g.drawRect(
+        from,
+        yScale(i), to - from, yScale.bandwidth()
+      );
+
+      // if (segment.differences) {
+      //   for (const diff of segment.differences) {
+      //     g.beginFill(0xff00ff);
+      //     const start = this._xScale(segment.from + diff[0]);
+      //     const end = this._xScale(segment.from + diff[0] + 1);
+
+      //     console.log('drawing rect', start, yScale(i), end - start, yScale.bandwidth());
+      //     g.drawRect(
+      //       start,
+      //       yScale(i), end - start, yScale.bandwidth()
+      //     );
+      //   }
+      // }
+    });
+  });
+  const t2 = currTime();
+  console.log('drawSegments', t2 - t1, '# of segments:', numSegments);
+};
+
+const scaleScalableGraphics = (graphics, xScale, drawnAtScale) => {
+  const tileK = (drawnAtScale.domain()[1] - drawnAtScale.domain()[0])
+    / (xScale.domain()[1] - xScale.domain()[0]);
+  const newRange = xScale.domain().map(drawnAtScale);
+
+  const posOffset = newRange[0];
+  graphics.scale.x = tileK;
+  graphics.position.x = -posOffset * tileK;
+};
 
 const scaleScalable = (tiles, xScale, graphicsAccessorIn) => {
   let graphicsAccessor = graphicsAccessorIn;
@@ -28,58 +91,44 @@ const scaleScalable = (tiles, xScale, graphicsAccessorIn) => {
 class PileupTrack extends Tiled1DPixiTrack {
   constructor(context, options) {
     super(context, options);
-    console.log('dataFetcher:', context.dataFetcher);
-    console.log('hi there');
+
+    // we scale the entire view up until a certain point
+    // at which point we redraw everything to get rid of
+    // artifacts
+    // this.drawnAtScale keeps track of the scale at which
+    // we last rendered everything
+    this.drawnAtScale = scaleLinear();
   }
 
-  draw() {
-    console.log('draw', this.fetchedTiles);
-  }
+  updateExistingGraphics() {
+    const allSegments = {};
 
-  initTile(tile) {
-    console.log('tile:', tile);
-    const rows = segmentsToRows(tile.tileData);
-    const d = range(0, rows.length);
-    const r = [this.position[1], this.position[1] + this.dimensions[1]];
-    const yScale = scaleBand().domain(d).range(r);
+    for (const tile of Object.values(this.fetchedTiles)) {
+      // console.log('ueg tile:', tile);
+      for (const segment of tile.tileData) {
+        allSegments[segment.id] = segment;
+      }
+    }
 
-    const g = tile.graphics;
+    const newGraphics = new PIXI.Graphics();
 
-    g.clear();
-    g.lineStyle(1, 0x000000);
+    drawSegments(
+      Object.values(allSegments),
+      newGraphics,
+      this._xScale,
+      this.position,
+      this.dimensions,
+    );
 
-    tile.drawnAtScale = this._xScale.copy();
+    if (this.segmentGraphics) {
+      this.pMain.removeChild(this.segmentGraphics);
+    }
 
-    rows.map((row, i) => {
-      row.map((segment, j) => {
-        const from = this._xScale(segment.from);
-        const to = this._xScale(segment.to);
+    this.pMain.addChild(newGraphics);
+    this.segmentGraphics = newGraphics;
 
-        // console.log('from:', from, 'to:', to);
-        // console.log('yScale(i)', yScale(i), yScale.bandwidth());
-
-        g.beginFill(0xffffff);
-        g.drawRect(
-          from,
-          yScale(i), to - from, yScale.bandwidth()
-        );
-
-        // if (segment.differences) {
-        //   for (const diff of segment.differences) {
-        //     g.beginFill(0xff00ff);
-        //     const start = this._xScale(segment.from + diff[0]);
-        //     const end = this._xScale(segment.from + diff[0] + 1);
-
-        //     console.log('drawing rect', start, yScale(i), end - start, yScale.bandwidth());
-        //     g.drawRect(
-        //       start,
-        //       yScale(i), end - start, yScale.bandwidth()
-        //     );
-        //   }
-        // }
-      });
-    });
-    // console.log('rows:', rows);
+    this.drawnAtScale = this._xScale.copy();
+    // console.log('ueg', allSegments);
   }
 
   calculateZoomLevel() {
@@ -102,7 +151,10 @@ class PileupTrack extends Tiled1DPixiTrack {
   zoomed(newXScale, newYScale) {
     super.zoomed(newXScale, newYScale);
 
-    scaleScalable(Object.values(this.fetchedTiles), newXScale);
+    if (this.segmentGraphics) {
+      scaleScalableGraphics(this.segmentGraphics, newXScale, this.drawnAtScale);
+    }
+    // scaleScalable(Object.values(this.fetchedTiles), newXScale);
   }
 }
 
