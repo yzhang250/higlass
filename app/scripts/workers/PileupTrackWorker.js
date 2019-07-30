@@ -1,5 +1,5 @@
 // workers/add.js
-import { expose } from "threads/worker"
+import { expose } from 'threads/worker';
 
 function currTime() {
   const d = new Date();
@@ -13,7 +13,7 @@ const baseColors = {
   T: 0xffff00,
 };
 
-expose(function(segmentList, graphics, xScale, position, dimensions) => {
+expose((segmentList, graphics, xScale, position, dimensions) => {
   const t1 = currTime();
 
   console.log('segmentList', segmentList.slice(0, 20));

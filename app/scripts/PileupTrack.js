@@ -22,7 +22,7 @@ class PileupTrack extends Tiled1DPixiTrack {
 
     console.log('worker', Worker);
     this.drawSegments = spawn(
-      new Worker('../workers/PileupTrackWorker')
+      new Worker('./workers/PileupTrackWorker')
     );
     console.log('drawSegments', this.drawSegments);
     // we scale the entire view up until a certain point
@@ -57,6 +57,16 @@ class PileupTrack extends Tiled1DPixiTrack {
     //   this.position,
     //   this.dimensions,
     // );
+    this.drawSegments.then((drawSegments) => {
+      console.log('drawSegments', drawSegments);
+      drawSegments(
+        Object.values(allSegments),
+        newGraphics,
+        this._xScale,
+        this.position,
+        this.dimensions
+      );
+    });
 
     if (this.segmentGraphics) {
       this.pMain.removeChild(this.segmentGraphics);
