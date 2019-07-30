@@ -2,7 +2,7 @@ import { scaleBand, scaleLinear } from 'd3-scale';
 import { range } from 'd3-array';
 import * as PIXI from 'pixi.js';
 import Tiled1DPixiTrack from './Tiled1DPixiTrack';
-import { trackUtils, segmentsToRows } from './utils';
+import { trackUtils, segmentsToRows, parseMD } from './utils';
 
 
 function currTime() {
@@ -10,8 +10,17 @@ function currTime() {
   return d.getTime();
 }
 
+const baseColors = {
+  A: 0x0000ff,
+  C: 0xff0000,
+  G: 0x00ff00,
+  T: 0xffff00,
+};
+
 const drawSegments = (segmentList, graphics, xScale, position, dimensions) => {
   const t1 = currTime();
+
+  console.log('segmentList', segmentList.slice(0, 20));
 
   const numSegments = segmentList.length;
   const rows = segmentsToRows(segmentList);
@@ -21,14 +30,27 @@ const drawSegments = (segmentList, graphics, xScale, position, dimensions) => {
 
   const g = graphics;
 
+
   g.clear();
   g.lineStyle(1, 0x000000);
+
+  // const array = Uint8Array.from([0xff, 0x00, 0x00, 0xff]);
+  // console.log('array:', array);
+  // var texture = PIXI.Texture.fromBuffer(
+  // array, 1, 1);
+  // const sprite = new PIXI.Sprite(texture);
+  // console.log('sprite 1:', sprite);
+
+  // sprite.width=300;
+  // sprite.height=300;
+  // g.addChild(sprite)
+
+  let mds = 0;
 
   rows.map((row, i) => {
     row.map((segment, j) => {
       const from = xScale(segment.from);
       const to = xScale(segment.to);
-
       // console.log('from:', from, 'to:', to);
       // console.log('yScale(i)', yScale(i), yScale.bandwidth());
 
@@ -37,6 +59,32 @@ const drawSegments = (segmentList, graphics, xScale, position, dimensions) => {
         from,
         yScale(i), to - from, yScale.bandwidth()
       );
+
+      if (segment.md) {
+        const substitutions = parseMD(segment.md);
+
+        g.lineStyle(0, 0x000000);
+        for (const substitution of substitutions) {
+          // const sprite = new PIXI.Sprite(texture);
+          // sprite.x = xScale(segment.from + substitution.pos - 1);
+          // sprite.y = yScale(i);
+
+          // sprite.width = Math.max(1, xScale(1) - xScale(0));
+          // sprite.height = yScale.bandwidth();
+
+          // g.addChild(sprite);
+          mds += 1;
+          g.beginFill(baseColors[substitution.base]);
+
+          g.drawRect(
+            xScale(segment.from + substitution.pos - 1),
+            yScale(i),
+            Math.max(1, xScale(1) - xScale(0)),
+            yScale.bandwidth(),
+          );
+        }
+        g.lineStyle(1, 0x000000);
+      }
 
       // if (segment.differences) {
       //   for (const diff of segment.differences) {
@@ -54,7 +102,8 @@ const drawSegments = (segmentList, graphics, xScale, position, dimensions) => {
     });
   });
   const t2 = currTime();
-  console.log('drawSegments', t2 - t1, '# of segments:', numSegments);
+  console.log('mds:', mds);
+  console.log('perSegment', 100 * (t2 - t1) / numSegments, 'drawSegments', t2 - t1, '# of segments:', numSegments);
 };
 
 const scaleScalableGraphics = (graphics, xScale, drawnAtScale) => {
@@ -65,27 +114,6 @@ const scaleScalableGraphics = (graphics, xScale, drawnAtScale) => {
   const posOffset = newRange[0];
   graphics.scale.x = tileK;
   graphics.position.x = -posOffset * tileK;
-};
-
-const scaleScalable = (tiles, xScale, graphicsAccessorIn) => {
-  let graphicsAccessor = graphicsAccessorIn;
-
-  if (graphicsAccessor === undefined) {
-    graphicsAccessor = tile => tile.graphics;
-  }
-
-  for (const tile of tiles) {
-    if (tile.drawnAtScale) {
-      const graphics = graphicsAccessor(tile);
-      const tileK = (tile.drawnAtScale.domain()[1] - tile.drawnAtScale.domain()[0])
-        / (xScale.domain()[1] - xScale.domain()[0]);
-      const newRange = xScale.domain().map(tile.drawnAtScale);
-
-      const posOffset = newRange[0];
-      graphics.scale.x = tileK;
-      graphics.position.x = -posOffset * tileK;
-    }
-  }
 };
 
 class PileupTrack extends Tiled1DPixiTrack {
@@ -100,6 +128,10 @@ class PileupTrack extends Tiled1DPixiTrack {
     this.drawnAtScale = scaleLinear();
   }
 
+  rerender(newOptions) {
+    this.updateExistingGraphics();
+  }
+
   updateExistingGraphics() {
     const allSegments = {};
 
@@ -112,6 +144,7 @@ class PileupTrack extends Tiled1DPixiTrack {
 
     const newGraphics = new PIXI.Graphics();
 
+    console.log('this.dimensions:', this.dimensions);
     drawSegments(
       Object.values(allSegments),
       newGraphics,
@@ -154,7 +187,6 @@ class PileupTrack extends Tiled1DPixiTrack {
     if (this.segmentGraphics) {
       scaleScalableGraphics(this.segmentGraphics, newXScale, this.drawnAtScale);
     }
-    // scaleScalable(Object.values(this.fetchedTiles), newXScale);
   }
 }
 

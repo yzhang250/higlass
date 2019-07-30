@@ -21,6 +21,8 @@ const bamRecordToJson = bamRecord => ({
   id: bamRecord._id,
   from: +bamRecord.data.start,
   to: +bamRecord.data.end,
+  md: bamRecord.get('MD'),
+  cigar: bamRecord.get('cigar'),
 });
 
 class BAMDataFetcher {
@@ -151,9 +153,7 @@ class BAMDataFetcher {
             recordPromises.push(
               this.bamFile.getRecordsForRange(
                 chromName, startPos, endPos
-              ).then(records =>
-              // console.log('records:', records);
-                records.map(rec => bamRecordToJson(rec)))
+              ).then(records => records.map(rec => bamRecordToJson(rec)))
             );
 
             // end the loop because we've retrieved the last chromosome

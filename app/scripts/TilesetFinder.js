@@ -18,9 +18,15 @@ class TilesetFinder extends React.Component {
 
     // this.localTracks = TRACKS_INFO.filter
 
+    console.log('TRACKS_INFO:', TRACKS_INFO);
     // local tracks are ones that don't have a filetype associated with them
     this.localTracks = TRACKS_INFO
-      .filter(x => x.local && !x.hidden)
+      .filter((x) => {
+        if (!x) {
+          console.warn('Empty track:', TRACKS_INFO);
+        }
+        return x && x.local && !x.hidden;
+      })
       .map((x) => {
         const y = Object.assign({}, x);
         y.datatype = x.datatype[0];

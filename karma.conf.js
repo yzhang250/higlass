@@ -24,7 +24,8 @@ module.exports = (config) => {
       {
         pattern: 'docs/examples/viewconfs/*.json', watched: true, served: true, included: false
       },
-      'test/**/*.+(js|jsx)',
+      // 'test/**/*.+(js|jsx)',
+      'test/BamUtilsTests.js',
       // 'test/GenbankFetcherTests.js',
       // 'test/SchemaTests.js',
       // 'test/2DRectangleDomainsTests.js',

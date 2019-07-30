@@ -83,3 +83,4 @@ export {
   removeHGComponent,
 } from './test-helpers';
 export { default as trackUtils } from './track-utils';
+export { default as parseMD } from './bam-utils';
