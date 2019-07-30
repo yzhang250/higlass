@@ -1,110 +1,10 @@
 import { scaleBand, scaleLinear } from 'd3-scale';
 import { range } from 'd3-array';
 import * as PIXI from 'pixi.js';
+import { spawn, Thread, Worker } from 'threads';
 import Tiled1DPixiTrack from './Tiled1DPixiTrack';
 import { trackUtils, segmentsToRows, parseMD } from './utils';
 
-
-function currTime() {
-  const d = new Date();
-  return d.getTime();
-}
-
-const baseColors = {
-  A: 0x0000ff,
-  C: 0xff0000,
-  G: 0x00ff00,
-  T: 0xffff00,
-};
-
-const drawSegments = (segmentList, graphics, xScale, position, dimensions) => {
-  const t1 = currTime();
-
-  console.log('segmentList', segmentList.slice(0, 20));
-
-  const numSegments = segmentList.length;
-  const rows = segmentsToRows(segmentList);
-  const d = range(0, rows.length);
-  const r = [position[1], position[1] + dimensions[1]];
-  const yScale = scaleBand().domain(d).range(r);
-
-  const g = graphics;
-
-
-  g.clear();
-  g.lineStyle(1, 0x000000);
-
-  // const array = Uint8Array.from([0xff, 0x00, 0x00, 0xff]);
-  // console.log('array:', array);
-  // var texture = PIXI.Texture.fromBuffer(
-  // array, 1, 1);
-  // const sprite = new PIXI.Sprite(texture);
-  // console.log('sprite 1:', sprite);
-
-  // sprite.width=300;
-  // sprite.height=300;
-  // g.addChild(sprite)
-
-  let mds = 0;
-
-  rows.map((row, i) => {
-    row.map((segment, j) => {
-      const from = xScale(segment.from);
-      const to = xScale(segment.to);
-      // console.log('from:', from, 'to:', to);
-      // console.log('yScale(i)', yScale(i), yScale.bandwidth());
-
-      g.beginFill(0xffffff);
-      g.drawRect(
-        from,
-        yScale(i), to - from, yScale.bandwidth()
-      );
-
-      if (segment.md) {
-        const substitutions = parseMD(segment.md);
-
-        g.lineStyle(0, 0x000000);
-        for (const substitution of substitutions) {
-          // const sprite = new PIXI.Sprite(texture);
-          // sprite.x = xScale(segment.from + substitution.pos - 1);
-          // sprite.y = yScale(i);
-
-          // sprite.width = Math.max(1, xScale(1) - xScale(0));
-          // sprite.height = yScale.bandwidth();
-
-          // g.addChild(sprite);
-          mds += 1;
-          g.beginFill(baseColors[substitution.base]);
-
-          g.drawRect(
-            xScale(segment.from + substitution.pos - 1),
-            yScale(i),
-            Math.max(1, xScale(1) - xScale(0)),
-            yScale.bandwidth(),
-          );
-        }
-        g.lineStyle(1, 0x000000);
-      }
-
-      // if (segment.differences) {
-      //   for (const diff of segment.differences) {
-      //     g.beginFill(0xff00ff);
-      //     const start = this._xScale(segment.from + diff[0]);
-      //     const end = this._xScale(segment.from + diff[0] + 1);
-
-      //     console.log('drawing rect', start, yScale(i), end - start, yScale.bandwidth());
-      //     g.drawRect(
-      //       start,
-      //       yScale(i), end - start, yScale.bandwidth()
-      //     );
-      //   }
-      // }
-    });
-  });
-  const t2 = currTime();
-  console.log('mds:', mds);
-  console.log('perSegment', 100 * (t2 - t1) / numSegments, 'drawSegments', t2 - t1, '# of segments:', numSegments);
-};
 
 const scaleScalableGraphics = (graphics, xScale, drawnAtScale) => {
   const tileK = (drawnAtScale.domain()[1] - drawnAtScale.domain()[0])
@@ -120,6 +20,11 @@ class PileupTrack extends Tiled1DPixiTrack {
   constructor(context, options) {
     super(context, options);
 
+    console.log('worker', Worker);
+    this.drawSegments = spawn(
+      new Worker('../workers/PileupTrackWorker')
+    );
+    console.log('drawSegments', this.drawSegments);
     // we scale the entire view up until a certain point
     // at which point we redraw everything to get rid of
     // artifacts
@@ -145,13 +50,13 @@ class PileupTrack extends Tiled1DPixiTrack {
     const newGraphics = new PIXI.Graphics();
 
     console.log('this.dimensions:', this.dimensions);
-    drawSegments(
-      Object.values(allSegments),
-      newGraphics,
-      this._xScale,
-      this.position,
-      this.dimensions,
-    );
+    // drawSegments(
+    //   Object.values(allSegments),
+    //   newGraphics,
+    //   this._xScale,
+    //   this.position,
+    //   this.dimensions,
+    // );
 
     if (this.segmentGraphics) {
       this.pMain.removeChild(this.segmentGraphics);

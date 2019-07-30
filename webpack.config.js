@@ -8,6 +8,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const UnminifiedWebpackPlugin = require('unminified-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const SassOptimizer = require('./scripts/sass-optimizer.js');
+const ThreadsPlugin = require('threads-plugin');
 
 const packageJson = require('./package.json');
 
@@ -18,7 +19,7 @@ module.exports = (env, argv) => ({
   context: `${__dirname}/app`,
   entry: {
     hglib: './scripts/hglib.js',
-    worker: './scripts/worker.js',
+    // worker: './scripts/worker.js',
   },
   watch: !!argv.watch,
   watchOptions: {
@@ -206,6 +207,7 @@ module.exports = (env, argv) => ({
   },
   plugins: [
     // Expose version numbers.
+    // 
     new webpack.DefinePlugin({
       VERSION: JSON.stringify(packageJson.version),
     }),
@@ -221,6 +223,7 @@ module.exports = (env, argv) => ({
     new SassOptimizer('*.scss'),
     new webpack.optimize.ModuleConcatenationPlugin(),
     new UnminifiedWebpackPlugin(),
+    new ThreadsPlugin(),
     // new BundleAnalyzerPlugin(),
   ],
 });
