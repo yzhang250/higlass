@@ -61,11 +61,11 @@ class PileupTrack extends Tiled1DPixiTrack {
       console.log('drawSegments', drawSegments);
       drawSegments(
         Object.values(allSegments),
-        newGraphics,
-        this._xScale,
+        // newGraphics,
+        // this._xScale,
         this.position,
         this.dimensions
-      );
+      ).then(ret => console.log('ret:', ret));
     });
 
     if (this.segmentGraphics) {
