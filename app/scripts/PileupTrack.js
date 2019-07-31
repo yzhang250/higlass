@@ -28,11 +28,14 @@ const drawSegments = (segmentList, graphics, xScale, position, dimensions) => {
   const r = [position[1], position[1] + dimensions[1]];
   const yScale = scaleBand().domain(d).range(r);
 
-  const g = graphics;
+  let graphicsRects = 0;
+
+  let currGraphics = new PIXI.Graphics();
+  graphics.addChild(currGraphics);
 
 
-  g.clear();
-  g.lineStyle(1, 0x000000);
+  currGraphics.clear();
+  currGraphics.lineStyle(1, 0x000000);
 
   // const array = Uint8Array.from([0xff, 0x00, 0x00, 0xff]);
   // console.log('array:', array);
@@ -54,8 +57,8 @@ const drawSegments = (segmentList, graphics, xScale, position, dimensions) => {
       // console.log('from:', from, 'to:', to);
       // console.log('yScale(i)', yScale(i), yScale.bandwidth());
 
-      g.beginFill(0xffffff);
-      g.drawRect(
+      currGraphics.beginFill(0xffffff);
+      currGraphics.drawRect(
         from,
         yScale(i), to - from, yScale.bandwidth()
       );
@@ -63,7 +66,7 @@ const drawSegments = (segmentList, graphics, xScale, position, dimensions) => {
       if (segment.md) {
         const substitutions = parseMD(segment.md);
 
-        g.lineStyle(0, 0x000000);
+        currGraphics.lineStyle(0, 0x000000);
         for (const substitution of substitutions) {
           // const sprite = new PIXI.Sprite(texture);
           // sprite.x = xScale(segment.from + substitution.pos - 1);
@@ -74,16 +77,23 @@ const drawSegments = (segmentList, graphics, xScale, position, dimensions) => {
 
           // g.addChild(sprite);
           mds += 1;
-          g.beginFill(baseColors[substitution.base]);
+          currGraphics.beginFill(baseColors[substitution.base]);
 
-          g.drawRect(
+          if (graphicsRects > 1000) {
+            currGraphics = new PIXI.Graphics();
+            graphics.addChild(currGraphics);
+            graphicsRects = 0;
+          }
+
+          graphicsRects += 1;
+          currGraphics.drawRect(
             xScale(segment.from + substitution.pos - 1),
             yScale(i),
             Math.max(1, xScale(1) - xScale(0)),
             yScale.bandwidth(),
           );
         }
-        g.lineStyle(1, 0x000000);
+        currGraphics.lineStyle(1, 0x000000);
       }
 
       // if (segment.differences) {
