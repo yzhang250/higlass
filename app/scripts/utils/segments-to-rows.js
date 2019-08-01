@@ -5,7 +5,13 @@ function currTime() {
   return d.getTime();
 }
 
-function segmentsToRows2(segments) {
+function segmentsToRows2(segments, paddingIn) {
+  let padding = 5;
+
+  if (paddingIn !== undefined) {
+    padding = paddingIn;
+  }
+
   const t1 = currTime();
   segments.sort((a, b) => a.from - b.from);
   const rows = [];
@@ -16,7 +22,7 @@ function segmentsToRows2(segments) {
 
     while (ix < segments.length) {
       if (row.length === 0
-        || row[row.length - 1].to < segments[ix].from) {
+        || row[row.length - 1].to < (segments[ix].from - 5)) {
         row.push(segments[ix]);
         segments.splice(ix, 1);
       } else {

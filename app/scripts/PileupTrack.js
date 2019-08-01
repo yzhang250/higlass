@@ -17,16 +17,61 @@ const baseColors = {
   T: 0xffff00,
 };
 
+const shader = PIXI.Shader.from(`
+
+    attribute vec2 position;
+    attribute vec4 aColor;
+
+    uniform mat3 projectionMatrix;
+    uniform mat3 translationMatrix;
+
+    varying vec4 vColor;
+    
+    void main(void)
+    {
+        vColor = aColor;
+        gl_Position = vec4((projectionMatrix * translationMatrix * vec3(position, 1.0)).xy, 0.0, 1.0);
+    }
+
+`,
+`  
+varying vec4 vColor;
+
+    void main(void) {
+        gl_FragColor = vColor;
+    }
+`);
+
 const drawSegments = (segmentList, graphics, xScale, position, dimensions) => {
   const t1 = currTime();
 
-  console.log('segmentList', segmentList.slice(0, 20));
+  let allPositions = new Float32Array(2**20);
+  let currPosition = 0;
+
+  let allColors = new Float32Array(2**21);
+  let currColor = 0;
+
+  const addPosition = (x1,y1) => {
+    allPositions[currPosition++] = x1;
+    allPositions[currPosition++] = y1;
+  };
+
+  const addColor = (r,g,b,a,n) => {
+    for (let k = 0; k < n; k++) {
+      allColors[currColor++] = r;
+      allColors[currColor++] = g;
+      allColors[currColor++] = b;
+      allColors[currColor++] = a;
+    }
+  };
+
+  // console.log('segmentList', segmentList.slice(0, 20));
 
   const numSegments = segmentList.length;
   const rows = segmentsToRows(segmentList);
   const d = range(0, rows.length);
   const r = [position[1], position[1] + dimensions[1]];
-  const yScale = scaleBand().domain(d).range(r);
+  const yScale = scaleBand().domain(d).range(r).paddingInner(0.2);
 
   let graphicsRects = 0;
 
@@ -37,18 +82,12 @@ const drawSegments = (segmentList, graphics, xScale, position, dimensions) => {
   currGraphics.clear();
   currGraphics.lineStyle(1, 0x000000);
 
-  // const array = Uint8Array.from([0xff, 0x00, 0x00, 0xff]);
-  // console.log('array:', array);
-  // var texture = PIXI.Texture.fromBuffer(
-  // array, 1, 1);
-  // const sprite = new PIXI.Sprite(texture);
-  // console.log('sprite 1:', sprite);
-
-  // sprite.width=300;
-  // sprite.height=300;
-  // g.addChild(sprite)
+  let positions = [];
+  let colors = [];
 
   let mds = 0;
+
+  let xLeft, xRight, yTop, yBottom;
 
   rows.map((row, i) => {
     row.map((segment, j) => {
@@ -57,43 +96,67 @@ const drawSegments = (segmentList, graphics, xScale, position, dimensions) => {
       // console.log('from:', from, 'to:', to);
       // console.log('yScale(i)', yScale(i), yScale.bandwidth());
 
-      currGraphics.beginFill(0xffffff);
-      currGraphics.drawRect(
-        from,
-        yScale(i), to - from, yScale.bandwidth()
-      );
+      xLeft = from;
+      xRight = to;
+      yTop = yScale(i);
+      yBottom = yTop + yScale.bandwidth();
+      // currGraphics.beginFill(0xffffff);
+      // currGraphics.drawRect(
+      //   from,
+      //   yScale(i), to - from, yScale.bandwidth()
+      // );
+      // positions.push(xLeft, yTop, xRight, yTop, xLeft, yBottom);
+
+      addPosition(xLeft, yTop);
+      addPosition(xRight, yTop);
+      addPosition(xLeft, yBottom);
+
+      addPosition(xLeft, yBottom);
+      addPosition(xRight, yTop);
+      addPosition(xRight, yBottom);
+
+      addColor(0.8, 0.8, 0.8, 1, 6);
 
       if (segment.md) {
         const substitutions = parseMD(segment.md);
 
-        currGraphics.lineStyle(0, 0x000000);
         for (const substitution of substitutions) {
-          // const sprite = new PIXI.Sprite(texture);
-          // sprite.x = xScale(segment.from + substitution.pos - 1);
-          // sprite.y = yScale(i);
-
-          // sprite.width = Math.max(1, xScale(1) - xScale(0));
-          // sprite.height = yScale.bandwidth();
-
           // g.addChild(sprite);
           mds += 1;
-          currGraphics.beginFill(baseColors[substitution.base]);
+          // currGraphics.beginFill(baseColors[substitution.base]);
 
-          if (graphicsRects > 1000) {
-            currGraphics = new PIXI.Graphics();
-            graphics.addChild(currGraphics);
-            graphicsRects = 0;
+          // if (graphicsRects > 1000) {
+          //   currGraphics = new PIXI.Graphics();
+          //   graphics.addChild(currGraphics);
+          //   graphicsRects = 0;
+          // }
+
+          xLeft = xScale(segment.from + substitution.pos - 1);
+          xRight = xLeft + Math.max(1, xScale(1) - xScale(0));
+          yTop = yScale(i);
+          yBottom = yTop + yScale.bandwidth();
+
+          addPosition(xLeft, yTop);
+          addPosition(xRight, yTop);
+          addPosition(xLeft, yBottom);
+
+          addPosition(xLeft, yBottom);
+          addPosition(xRight, yTop);
+          addPosition(xRight, yBottom);
+
+          if (substitution.base === 'A') {
+            addColor(0, 0, 1, 1, 6);
+          } else if (substitution.base === 'C') {
+            addColor(1, 0, 0, 1, 6);
+          } else if (substitution.base === 'G') {
+            addColor(0, 1, 0, 1, 6);
+          } else if (substitution.base === 'T') {
+            addColor(1, 1, 0, 1, 6);
+          } else {
+            addColor(0, 0, 0, 1, 6);
           }
-
-          graphicsRects += 1;
-          currGraphics.drawRect(
-            xScale(segment.from + substitution.pos - 1),
-            yScale(i),
-            Math.max(1, xScale(1) - xScale(0)),
-            yScale.bandwidth(),
-          );
         }
-        currGraphics.lineStyle(1, 0x000000);
+        // currGraphics.lineStyle(1, 0x000000);
       }
 
       // if (segment.differences) {
@@ -111,6 +174,21 @@ const drawSegments = (segmentList, graphics, xScale, position, dimensions) => {
       // }
     });
   });
+
+  console.log('currPosition:', currPosition);
+  console.log('currColor:', currColor);
+
+  // console.log('positions:',
+  //   allPositions.slice(0, currPosition));
+
+  const geometry = new PIXI.Geometry()
+    .addAttribute('position', allPositions.slice(0, currPosition), 2);// x,y
+  geometry.addAttribute('aColor', allColors.slice(0, currColor), 4);
+
+  const state = new PIXI.State();
+  const mesh = new PIXI.Mesh(geometry, shader, state);
+
+  graphics.addChild(mesh);
   const t2 = currTime();
   console.log('mds:', mds);
   console.log('perSegment', 100 * (t2 - t1) / numSegments, 'drawSegments', t2 - t1, '# of segments:', numSegments);
