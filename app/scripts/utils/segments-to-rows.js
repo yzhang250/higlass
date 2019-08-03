@@ -150,6 +150,8 @@ function segmentsToRows(segments, optionsIn) {
     currRow += 1;
   }
 
+  const t2 = currTime();
+  console.log('segmentsToRows time', t2 - t1);
   return outputRows;
 }
 

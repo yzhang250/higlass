@@ -1,4 +1,4 @@
-const parseMD = (mdString) => {
+const parseMD = (mdString, useCounts) => {
   let currPos = 1;
   let lettersBefore = [];
   const substitutions = [];
@@ -13,10 +13,19 @@ const parseMD = (mdString) => {
       if (lettersBefore.length) {
         currPos += +lettersBefore.join('');
       }
-      substitutions.push({
-        pos: currPos,
-        base: mdString[i],
-      });
+
+      if (useCounts) {
+        substitutions.push({
+          length: +lettersBefore.join(''),
+          type: mdString[i],
+        });
+      } else {
+        substitutions.push({
+          pos: currPos,
+          base: mdString[i + 0],
+          length: 1,
+        });
+      }
 
       lettersBefore = [];
       currPos += 1;

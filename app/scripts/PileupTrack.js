@@ -10,13 +10,6 @@ function currTime() {
   return d.getTime();
 }
 
-const baseColors = {
-  A: 0x0000ff,
-  C: 0xff0000,
-  G: 0x00ff00,
-  T: 0xffff00,
-};
-
 const shader = PIXI.Shader.from(`
 
     attribute vec2 position;
@@ -66,7 +59,10 @@ const drawSegments = (segmentList, graphics, xScale,
     }
   };
 
-  // console.log('segmentList', segmentList.slice(0, 20));
+  // segmentList.slice(0, 30)
+  // .forEach(x => {
+  //   console.log(x.cigar, x);
+  // })
 
   const numSegments = segmentList.length;
   const rows = segmentsToRows(segmentList, {
@@ -79,17 +75,11 @@ const drawSegments = (segmentList, graphics, xScale,
   // console.log('rows:', rows);
   // console.log('idsToRows', idsToRows);
 
-  const graphicsRects = 0;
-
   const currGraphics = new PIXI.Graphics();
   graphics.addChild(currGraphics);
 
-
   currGraphics.clear();
   currGraphics.lineStyle(1, 0x000000);
-
-  const positions = [];
-  const colors = [];
 
   let mds = 0;
 
@@ -126,12 +116,36 @@ const drawSegments = (segmentList, graphics, xScale,
 
       if (segment.md) {
         const substitutions = parseMD(segment.md);
+        const cigarSubs = parseMD(segment.cigar, true);
+
+        const firstSub = cigarSubs[0];
+        const lastSub = cigarSubs[cigarSubs.length - 1];
+        // console.log('firstSub:', firstSub), cigarSubs;
+
+        // positions are from the beginning of the read
+        if (firstSub.type === 'S') {
+          // soft clipping at the beginning
+          substitutions.push({
+            pos: -firstSub.length,
+            type: 'S',
+            length: firstSub.length,
+          });
+        } else if (lastSub.type === 'S') {
+          // soft clipping at the end
+          substitutions.push({
+            pos: (segment.to - segment.from),
+            length: lastSub.length,
+            type: 'S',
+          });
+        }
+
+        // console.log('cigarSubs', segment.cigar, cigarSubs);
 
         for (const substitution of substitutions) {
           mds += 1;
 
           xLeft = xScale(segment.from + substitution.pos - 1);
-          xRight = xLeft + Math.max(1, xScale(1) - xScale(0));
+          xRight = xLeft + Math.max(1, xScale(substitution.length) - xScale(0));
           yTop = yScale(i);
           yBottom = yTop + yScale.bandwidth();
 
@@ -151,6 +165,8 @@ const drawSegments = (segmentList, graphics, xScale,
             addColor(0, 1, 0, 1, 6);
           } else if (substitution.base === 'T') {
             addColor(1, 1, 0, 1, 6);
+          } else if (substitution.type === 'S') {
+            addColor(0, 1, 1, 0.5, 6);
           } else {
             addColor(0, 0, 0, 1, 6);
           }
