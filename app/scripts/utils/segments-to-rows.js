@@ -5,87 +5,133 @@ function currTime() {
   return d.getTime();
 }
 
-function segmentsToRows2(segments, paddingIn) {
-  let padding = 5;
-
-  if (paddingIn !== undefined) {
-    padding = paddingIn;
-  }
+function segmentsToRows(segments, optionsIn) {
+  const { prevRows, padding } = Object.assign(
+    { prevRows: [], padding: 5 },
+    optionsIn || {}
+  );
 
   const t1 = currTime();
   segments.sort((a, b) => a.from - b.from);
   const rows = [];
 
-  while (segments.length) {
-    const row = [];
+  const t11 = currTime();
+  const rowIds = new Set(prevRows.flatMap(x => x).map(x => x.id));
+
+  console.log('flatMap:', prevRows.flatMap(x => x).map(x => x.id));
+  console.log('rowIds:', rowIds);
+  // we only want to go through the segments that
+  // don't already have a row
+  const filteredSegments = segments.filter(
+    x => !rowIds.has(x.id)
+  );
+
+  // console.log('filteredSegments.length:', filteredSegments.length);
+
+  // we also want to remove all row entries that are
+  // not in our list of segments
+  const segmentIds = new Set(
+    segments.map(x => x.id)
+  );
+  const newRows = prevRows.map(
+    row => row.filter(segment => segmentIds.has(segment.id))
+  );
+
+  // console.log('segmentIds:', segmentIds);
+  // console.log('prevRows:', prevRows);
+
+
+  const t12 = currTime();
+  // console.log('segmentIds', t12 - t11);
+  console.log('prevRows:', prevRows);
+  console.log('newRows:', newRows);
+
+  let currRow = 0;
+
+  const outputRows = newRows;
+
+  while (filteredSegments.length) {
+    const row = newRows[currRow] || [];
+    let currRowPosition = 0;
     let ix = 0;
 
-    while (ix < segments.length) {
-      if (row.length === 0
-        || row[row.length - 1].to < (segments[ix].from - 5)) {
-        row.push(segments[ix]);
-        segments.splice(ix, 1);
-      } else {
+    while (ix < filteredSegments.length) {
+      const seg = filteredSegments[ix];
+
+      if (row.length === 0) {
+        // row is empty, add the segment
+        row.push(seg);
+        // console.log('adding:', seg, row.slice(0));
+        filteredSegments.splice(ix, 1);
         ix++;
+        continue;
       }
-    }
-    
 
-    rows.push(row);
+      let intersects = false;
+      while (currRowPosition < row.length) {
+        if (row[currRowPosition].from
+          < (seg.to + padding)) {
+          // this row starts before or within the segment
+          if ((seg.from - padding) < row[currRowPosition].to) {
+            // this row intersects the segment;
+            intersects = true;
+            break;
+          } else {
+            // it's before this segment
+            currRowPosition++;
+          }
+        } else {
+          // this row is after the current segment
+          break;
+        }
+      }
+
+      if (intersects) {
+        ix++;
+        continue;
+      }
+
+      if (currRowPosition >= row.length) {
+        // we're past the last element in the row so we can
+        // add this segment
+        row.push(seg);
+        // console.log('adding:', seg, row.slice(0));
+        filteredSegments.splice(ix, 1);
+      } else if (seg.to + padding < row[currRowPosition].from) {
+        // we have space to insert an element before
+        // the next segment
+        row.splice(currRowPosition, 0, seg);
+        filteredSegments.splice(ix, 1);
+      }
+
+      ix++;
+      // while (currRowPosition < row.length) {
+      //   if (row[currRowPosition].to < (segments[ix].from - padding)) {
+      //     currRowPosition
+      //   }
+      // }
+
+      // if (row.length === 0
+      //   || row[currRowPosition].to < (segments[ix].from - padding)) {
+      //   row.push(segments[ix]);
+      //   segments.splice(ix, 1);
+      // } else {
+      //   ix++;
+      // }
+    }
+
+    if (outputRows.length === currRow) {
+      outputRows.push(row);
+    } else {
+      outputRows[currRow] = row;
+    }
+
+    currRow += 1;
+    // console.log("len:", outputRows.length);
+    // outputRows.push(row);
   }
 
-  // console.log('rows:', rows);
-  console.log('time:', currTime() - t1);
-  return rows;
-}
-
-function segmentsToRows(segments) {
-  /**
-       * Partition a list of segments into an array of
-       * rows containing the segments.
-       *
-       * @param segments: An array of segments (e.g. [{from: 10, to: 20}, {from: 18, to: 30}])
-       * @return: An array of arrays of segments, representing
-       *          non-overlapping rows of segments
-       */
-  // sort by the length of each segment
-  return segmentsToRows2(segments);
-
-  const t1 = currTime();
-  segments.sort((a, b) => (b.to - b.from) - (a.to - a.from));
-
-  const rows = [[]];
-  const rowIts = [new IntervalTree()];
-
-  // fill out each row with segments
-  for (let i = 0; i < segments.length; i++) {
-    let placed = false;
-
-    for (let j = 0; j < rows.length; j++) {
-      const it = rowIts[j]; // an interval tree
-
-      const occluded = it.intersects([segments[i].from, segments[i].to]);
-
-      if (!occluded) {
-        // no intersections on this row, place this segment here
-        it.add([segments[i].from, segments[i].to]);
-        rows[j].push(segments[i]);
-        placed = true;
-        break;
-      }
-    }
-
-    if (!placed) {
-      const newTree = new IntervalTree();
-
-      newTree.add([segments[i].from, segments[i].to]);
-      rows.push([segments[i]]);
-      rowIts.push(newTree);
-    }
-  }
-
-  console.log('time:', currTime() - t1);
-  return rows;
+  return outputRows;
 }
 
 export default segmentsToRows;

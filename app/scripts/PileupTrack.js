@@ -42,21 +42,22 @@ varying vec4 vColor;
     }
 `);
 
-const drawSegments = (segmentList, graphics, xScale, position, dimensions) => {
+const drawSegments = (segmentList, graphics, xScale,
+  position, dimensions, prevRows) => {
   const t1 = currTime();
 
-  let allPositions = new Float32Array(2**20);
+  const allPositions = new Float32Array(2 ** 20);
   let currPosition = 0;
 
-  let allColors = new Float32Array(2**21);
+  const allColors = new Float32Array(2 ** 21);
   let currColor = 0;
 
-  const addPosition = (x1,y1) => {
+  const addPosition = (x1, y1) => {
     allPositions[currPosition++] = x1;
     allPositions[currPosition++] = y1;
   };
 
-  const addColor = (r,g,b,a,n) => {
+  const addColor = (r, g, b, a, n) => {
     for (let k = 0; k < n; k++) {
       allColors[currColor++] = r;
       allColors[currColor++] = g;
@@ -68,26 +69,32 @@ const drawSegments = (segmentList, graphics, xScale, position, dimensions) => {
   // console.log('segmentList', segmentList.slice(0, 20));
 
   const numSegments = segmentList.length;
-  const rows = segmentsToRows(segmentList);
+  const rows = segmentsToRows(segmentList, {
+    prevRows,
+  });
   const d = range(0, rows.length);
   const r = [position[1], position[1] + dimensions[1]];
   const yScale = scaleBand().domain(d).range(r).paddingInner(0.2);
 
-  let graphicsRects = 0;
+  // console.log('rows:', rows);
+  // console.log('idsToRows', idsToRows);
 
-  let currGraphics = new PIXI.Graphics();
+  const graphicsRects = 0;
+
+  const currGraphics = new PIXI.Graphics();
   graphics.addChild(currGraphics);
 
 
   currGraphics.clear();
   currGraphics.lineStyle(1, 0x000000);
 
-  let positions = [];
-  let colors = [];
+  const positions = [];
+  const colors = [];
 
   let mds = 0;
 
-  let xLeft, xRight, yTop, yBottom;
+  let xLeft; let xRight; let yTop; let
+    yBottom;
 
   rows.map((row, i) => {
     row.map((segment, j) => {
@@ -121,15 +128,7 @@ const drawSegments = (segmentList, graphics, xScale, position, dimensions) => {
         const substitutions = parseMD(segment.md);
 
         for (const substitution of substitutions) {
-          // g.addChild(sprite);
           mds += 1;
-          // currGraphics.beginFill(baseColors[substitution.base]);
-
-          // if (graphicsRects > 1000) {
-          //   currGraphics = new PIXI.Graphics();
-          //   graphics.addChild(currGraphics);
-          //   graphicsRects = 0;
-          // }
 
           xLeft = xScale(segment.from + substitution.pos - 1);
           xRight = xLeft + Math.max(1, xScale(1) - xScale(0));
@@ -156,30 +155,10 @@ const drawSegments = (segmentList, graphics, xScale, position, dimensions) => {
             addColor(0, 0, 0, 1, 6);
           }
         }
-        // currGraphics.lineStyle(1, 0x000000);
       }
-
-      // if (segment.differences) {
-      //   for (const diff of segment.differences) {
-      //     g.beginFill(0xff00ff);
-      //     const start = this._xScale(segment.from + diff[0]);
-      //     const end = this._xScale(segment.from + diff[0] + 1);
-
-      //     console.log('drawing rect', start, yScale(i), end - start, yScale.bandwidth());
-      //     g.drawRect(
-      //       start,
-      //       yScale(i), end - start, yScale.bandwidth()
-      //     );
-      //   }
-      // }
     });
   });
 
-  console.log('currPosition:', currPosition);
-  console.log('currColor:', currColor);
-
-  // console.log('positions:',
-  //   allPositions.slice(0, currPosition));
 
   const geometry = new PIXI.Geometry()
     .addAttribute('position', allPositions.slice(0, currPosition), 2);// x,y
@@ -192,6 +171,8 @@ const drawSegments = (segmentList, graphics, xScale, position, dimensions) => {
   const t2 = currTime();
   console.log('mds:', mds);
   console.log('perSegment', 100 * (t2 - t1) / numSegments, 'drawSegments', t2 - t1, '# of segments:', numSegments);
+
+  return rows;
 };
 
 const scaleScalableGraphics = (graphics, xScale, drawnAtScale) => {
@@ -214,6 +195,7 @@ class PileupTrack extends Tiled1DPixiTrack {
     // this.drawnAtScale keeps track of the scale at which
     // we last rendered everything
     this.drawnAtScale = scaleLinear();
+    this.prevRows = [];
   }
 
   rerender(newOptions) {
@@ -232,13 +214,13 @@ class PileupTrack extends Tiled1DPixiTrack {
 
     const newGraphics = new PIXI.Graphics();
 
-    console.log('this.dimensions:', this.dimensions);
-    drawSegments(
+    this.prevRows = drawSegments(
       Object.values(allSegments),
       newGraphics,
       this._xScale,
       this.position,
       this.dimensions,
+      this.prevRows,
     );
 
     if (this.segmentGraphics) {

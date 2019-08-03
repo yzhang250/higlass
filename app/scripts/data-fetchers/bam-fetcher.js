@@ -110,7 +110,6 @@ class BAMDataFetcher {
   tile(z, x) {
     return this.tilesetInfo().then((tsInfo) => {
       const tileWidth = +tsInfo.max_width / 2 ** (+z);
-      console.log('z:', z, 'x:', x);
       const recordPromises = [];
 
       // get the bounds of the tile
@@ -149,7 +148,6 @@ class BAMDataFetcher {
           } else {
             const endPos = Math.ceil(maxX - chromStart);
             const startPos = Math.floor(minX - chromStart);
-            console.log('chromName:', chromName, startPos, endPos);
             // the end of the region is within this chromosome
             recordPromises.push(
               this.bamFile.getRecordsForRange(
