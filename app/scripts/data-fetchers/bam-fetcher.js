@@ -148,7 +148,6 @@ class BAMDataFetcher {
           } else {
             const endPos = Math.ceil(maxX - chromStart);
             const startPos = Math.floor(minX - chromStart);
-            // console.log('chromName:', chromName, startPos, endPos);
             // the end of the region is within this chromosome
             recordPromises.push(
               this.bamFile.getRecordsForRange(

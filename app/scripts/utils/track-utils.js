@@ -188,7 +188,7 @@ const calculate1DVisibleTiles = (tilesetInfo, scale) => {
   if (!tilesetInfo) { return []; }
 
   // calculate the zoom level given the scales and the data bounds
-  const zoomLevel = calculate1DZoomLevel(tilesetInfo, scale);
+  const zoomLevel = calculate1DZoomLevel(tilesetInfo, scale, tilesetInfo.max_zoom);
 
   if (tilesetInfo.resolutions) {
     const sortedResolutions = tilesetInfo.resolutions
