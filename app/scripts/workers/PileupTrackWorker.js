@@ -186,18 +186,39 @@ expose(
     const xScale = scaleLinear().domain(domain).range(scaleRange);
     const t1 = currTime();
 
-    const allPositions = new Float32Array(2 ** 20);
+    const STARTING_POSITIONS_ARRAY_LENGTH = 2 ** 20;
+    const STARTING_COLORS_ARRAY_LENGTH = 2 ** 21;
+
+    let allPositionsLength = STARTING_POSITIONS_ARRAY_LENGTH;
+    let allColorsLength = STARTING_COLORS_ARRAY_LENGTH;
+
+    let allPositions = new Float32Array(allPositionsLength);
     let currPosition = 0;
 
-    const allColors = new Float32Array(2 ** 21);
+    let allColors = new Float32Array(allColorsLength);
     let currColor = 0;
 
     const addPosition = (x1, y1) => {
+      if (currPosition > allPositionsLength - 2) {
+        allPositionsLength *= 2;
+        const prevAllPositions = allPositions;
+
+        allPositions = new Float32Array(allPositionsLength);
+        allPositions.set(prevAllPositions);
+      }
       allPositions[currPosition++] = x1;
       allPositions[currPosition++] = y1;
     };
 
     const addColor = (r, g, b, a, n) => {
+      if (currColor >= allColorsLength - n * 4) {
+        allColorsLength *= 2;
+        const prevAllColors = allColors;
+
+        allColors = new Float32Array(allColorsLength);
+        allColors.set(prevAllColors);
+      }
+
       for (let k = 0; k < n; k++) {
         allColors[currColor++] = r;
         allColors[currColor++] = g;
@@ -342,6 +363,8 @@ expose(
       rows,
       positions,
       colors,
+      xScaleDomain: domain,
+      xScaleRange: scaleRange,
     };
   }
 );

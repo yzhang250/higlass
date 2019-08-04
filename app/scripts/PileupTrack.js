@@ -1,15 +1,8 @@
-import { scaleBand, scaleLinear } from 'd3-scale';
-import { range } from 'd3-array';
+import { scaleLinear } from 'd3-scale';
 import * as PIXI from 'pixi.js';
 import { spawn, Thread, Worker } from 'threads';
 import Tiled1DPixiTrack from './Tiled1DPixiTrack';
-import { trackUtils, segmentsToRows, parseMD } from './utils';
-
-
-function currTime() {
-  const d = new Date();
-  return d.getTime();
-}
+import { trackUtils } from './utils';
 
 const shader = PIXI.Shader.from(`
 
@@ -36,162 +29,6 @@ varying vec4 vColor;
     }
 `);
 
-const drawSegments = (segmentList, graphics, xScale,
-  position, dimensions, prevRows) => {
-  const t1 = currTime();
-
-  const allPositions = new Float32Array(2 ** 20);
-  let currPosition = 0;
-
-  const allColors = new Float32Array(2 ** 21);
-  let currColor = 0;
-
-  const addPosition = (x1, y1) => {
-    allPositions[currPosition++] = x1;
-    allPositions[currPosition++] = y1;
-  };
-
-  const addColor = (r, g, b, a, n) => {
-    for (let k = 0; k < n; k++) {
-      allColors[currColor++] = r;
-      allColors[currColor++] = g;
-      allColors[currColor++] = b;
-      allColors[currColor++] = a;
-    }
-  };
-
-  // segmentList.slice(0, 30)
-  // .forEach(x => {
-  //   console.log(x.cigar, x);
-  // })
-
-  const numSegments = segmentList.length;
-  const rows = segmentsToRows(segmentList, {
-    prevRows,
-  });
-  const d = range(0, rows.length);
-  const r = [position[1], position[1] + dimensions[1]];
-  const yScale = scaleBand().domain(d).range(r).paddingInner(0.2);
-
-  // console.log('rows:', rows);
-  // console.log('idsToRows', idsToRows);
-
-  const currGraphics = new PIXI.Graphics();
-  graphics.addChild(currGraphics);
-
-  currGraphics.clear();
-  currGraphics.lineStyle(1, 0x000000);
-
-  let mds = 0;
-
-  let xLeft; let xRight; let yTop; let
-    yBottom;
-
-  rows.map((row, i) => {
-    row.map((segment, j) => {
-      const from = xScale(segment.from);
-      const to = xScale(segment.to);
-      // console.log('from:', from, 'to:', to);
-      // console.log('yScale(i)', yScale(i), yScale.bandwidth());
-
-      xLeft = from;
-      xRight = to;
-      yTop = yScale(i);
-      yBottom = yTop + yScale.bandwidth();
-      // currGraphics.beginFill(0xffffff);
-      // currGraphics.drawRect(
-      //   from,
-      //   yScale(i), to - from, yScale.bandwidth()
-      // );
-      // positions.push(xLeft, yTop, xRight, yTop, xLeft, yBottom);
-
-      addPosition(xLeft, yTop);
-      addPosition(xRight, yTop);
-      addPosition(xLeft, yBottom);
-
-      addPosition(xLeft, yBottom);
-      addPosition(xRight, yTop);
-      addPosition(xRight, yBottom);
-
-      addColor(0.8, 0.8, 0.8, 1, 6);
-
-      if (segment.md) {
-        const substitutions = parseMD(segment.md);
-        const cigarSubs = parseMD(segment.cigar, true);
-
-        const firstSub = cigarSubs[0];
-        const lastSub = cigarSubs[cigarSubs.length - 1];
-        // console.log('firstSub:', firstSub), cigarSubs;
-
-        // positions are from the beginning of the read
-        if (firstSub.type === 'S') {
-          // soft clipping at the beginning
-          substitutions.push({
-            pos: -firstSub.length,
-            type: 'S',
-            length: firstSub.length,
-          });
-        } else if (lastSub.type === 'S') {
-          // soft clipping at the end
-          substitutions.push({
-            pos: (segment.to - segment.from),
-            length: lastSub.length,
-            type: 'S',
-          });
-        }
-
-        // console.log('cigarSubs', segment.cigar, cigarSubs);
-
-        for (const substitution of substitutions) {
-          mds += 1;
-
-          xLeft = xScale(segment.from + substitution.pos - 1);
-          xRight = xLeft + Math.max(1, xScale(substitution.length) - xScale(0));
-          yTop = yScale(i);
-          yBottom = yTop + yScale.bandwidth();
-
-          addPosition(xLeft, yTop);
-          addPosition(xRight, yTop);
-          addPosition(xLeft, yBottom);
-
-          addPosition(xLeft, yBottom);
-          addPosition(xRight, yTop);
-          addPosition(xRight, yBottom);
-
-          if (substitution.base === 'A') {
-            addColor(0, 0, 1, 1, 6);
-          } else if (substitution.base === 'C') {
-            addColor(1, 0, 0, 1, 6);
-          } else if (substitution.base === 'G') {
-            addColor(0, 1, 0, 1, 6);
-          } else if (substitution.base === 'T') {
-            addColor(1, 1, 0, 1, 6);
-          } else if (substitution.type === 'S') {
-            addColor(0, 1, 1, 0.5, 6);
-          } else {
-            addColor(0, 0, 0, 1, 6);
-          }
-        }
-      }
-    });
-  });
-
-
-  const geometry = new PIXI.Geometry()
-    .addAttribute('position', allPositions.slice(0, currPosition), 2);// x,y
-  geometry.addAttribute('aColor', allColors.slice(0, currColor), 4);
-
-  const state = new PIXI.State();
-  const mesh = new PIXI.Mesh(geometry, shader, state);
-
-  graphics.addChild(mesh);
-  const t2 = currTime();
-  console.log('mds:', mds);
-  console.log('perSegment', 100 * (t2 - t1) / numSegments, 'drawSegments', t2 - t1, '# of segments:', numSegments);
-
-  return rows;
-};
-
 const scaleScalableGraphics = (graphics, xScale, drawnAtScale) => {
   const tileK = (drawnAtScale.domain()[1] - drawnAtScale.domain()[0])
     / (xScale.domain()[1] - xScale.domain()[0]);
@@ -206,11 +43,9 @@ class PileupTrack extends Tiled1DPixiTrack {
   constructor(context, options) {
     super(context, options);
 
-    console.log('worker', Worker);
     this.renderSegments = spawn(
       new Worker('./workers/PileupTrackWorker')
     );
-    console.log('drawSegments', this.drawSegments);
     // we scale the entire view up until a certain point
     // at which point we redraw everything to get rid of
     // artifacts
@@ -243,17 +78,20 @@ class PileupTrack extends Tiled1DPixiTrack {
         this.position,
         this.dimensions,
         this.prevRows
-      ).then((indeces) => {
+      ).then((toRender) => {
+        // console.log('toRender', toRender);
         const newGraphics = new PIXI.Graphics();
 
-        this.prevRows = drawSegments(
-          Object.values(allSegments),
-          newGraphics,
-          this._xScale,
-          this.position,
-          this.dimensions,
-          this.prevRows,
-        );
+        this.prevRows = toRender.rows;
+
+        const geometry = new PIXI.Geometry()
+          .addAttribute('position', toRender.positions, 2);// x,y
+        geometry.addAttribute('aColor', toRender.colors, 4);
+
+        const state = new PIXI.State();
+        const mesh = new PIXI.Mesh(geometry, shader, state);
+
+        newGraphics.addChild(mesh);
 
         if (this.segmentGraphics) {
           this.pMain.removeChild(this.segmentGraphics);
@@ -262,23 +100,19 @@ class PileupTrack extends Tiled1DPixiTrack {
         this.pMain.addChild(newGraphics);
         this.segmentGraphics = newGraphics;
 
-        this.drawnAtScale = this._xScale.copy();
+        this.drawnAtScale = scaleLinear()
+          .domain(toRender.xScaleDomain)
+          .range(toRender.xScaleRange);
+
+        scaleScalableGraphics(
+          this.segmentGraphics,
+          this._xScale,
+          this.drawnAtScale,
+        );
+
+        this.animate();
       });
     });
-
-    // this.drawSegments.then((drawSegments) => {
-    //   console.log('drawSegments', drawSegments);
-    //   drawSegments(
-    //     Object.values(allSegments),
-    //     // newGraphics,
-    //     // this._xScale,
-    //     this.position,
-    //     this.dimensions
-    //   ).then(ret => console.log('ret:', ret));
-    // });
-
-
-    // console.log('ueg', allSegments);
   }
 
   calculateZoomLevel() {
