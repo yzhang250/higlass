@@ -1,7 +1,7 @@
 // workers/add.js
 import { scaleLinear, scaleBand } from 'd3-scale';
 import { range } from 'd3-array';
-import { expose } from 'threads/worker';
+import { expose, Transfer } from 'threads/worker';
 // import { segmentsToRows, parseMD } from '../utils';
 
 function currTime() {
@@ -181,21 +181,22 @@ function segmentsToRows(segments, optionsIn) {
   return outputRows;
 }
 
+const STARTING_POSITIONS_ARRAY_LENGTH = 2 ** 20;
+const STARTING_COLORS_ARRAY_LENGTH = 2 ** 21;
+
+let allPositionsLength = STARTING_POSITIONS_ARRAY_LENGTH;
+let allColorsLength = STARTING_COLORS_ARRAY_LENGTH;
+
+let allPositions = new Float32Array(allPositionsLength);
+let allColors = new Float32Array(allColorsLength);
+
 expose(
   (segmentList, domain, scaleRange, position, dimensions, prevRows) => {
     const xScale = scaleLinear().domain(domain).range(scaleRange);
     const t1 = currTime();
 
-    const STARTING_POSITIONS_ARRAY_LENGTH = 2 ** 20;
-    const STARTING_COLORS_ARRAY_LENGTH = 2 ** 21;
-
-    let allPositionsLength = STARTING_POSITIONS_ARRAY_LENGTH;
-    let allColorsLength = STARTING_COLORS_ARRAY_LENGTH;
-
-    let allPositions = new Float32Array(allPositionsLength);
     let currPosition = 0;
 
-    let allColors = new Float32Array(allColorsLength);
     let currColor = 0;
 
     const addPosition = (x1, y1) => {
@@ -232,7 +233,6 @@ expose(
     //   console.log(x.cigar, x);
     // })
 
-    const numSegments = segmentList.length;
     const rows = segmentsToRows(segmentList, {
       prevRows,
     });
@@ -356,17 +356,23 @@ expose(
     // console.log('mds:', mds);
     // console.log('perSegment', 100 * (t2 - t1) / numSegments, 'drawSegments', t2 - t1, '# of segments:', numSegments);
 
-    const positions = allPositions.slice(0, currPosition);
-    const colors = allColors.slice(0, currColor);
+    const positionsBuffer = allPositions.slice(0, currPosition).buffer;
+    const colorsBuffer = allColors.slice(0, currColor).buffer;
 
-    console.log('rects:', positions.length / 6);
-    console.log('rows:', rows.length);
-    return {
+    // console.log('rects:', positions.length / 6);
+    // console.log('rows:', rows.length);
+    // console.log('positions:', positions);
+    // console.log('colors:', colors);
+
+    const objData = {
       rows,
-      positions,
-      colors,
+      positionsBuffer,
+      colorsBuffer,
       xScaleDomain: domain,
       xScaleRange: scaleRange,
     };
+
+    return Transfer(objData,
+      [objData.positionsBuffer, colorsBuffer]);
   }
 );

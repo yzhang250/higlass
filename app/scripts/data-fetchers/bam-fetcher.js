@@ -2,6 +2,10 @@ import slugid from 'slugid';
 import { BamFile } from '@gmod/bam';
 import ChromosomeInfo from '../ChromosomeInfo';
 
+function currTime() {
+  const d = new Date();
+  return d.getTime();
+}
 // const t = new BamFile({
 //   bamUrl: 'https://pkerp.s3.amazonaws.com/public/bamfile_test/SRR1770413.sorted.bam',
 // });
@@ -165,9 +169,13 @@ class BAMDataFetcher {
                   // viewAsPairs: true,
                   // maxInsertSize: 2000,
                 }
-              ).then(records => {
+              ).then((records) => {
                 // console.log('records:', records);
-                return records.map(rec => bamRecordToJson(rec));
+                const t1 = currTime();
+                const mappedRecords = records.map(rec => bamRecordToJson(rec));
+                const t2 = currTime();
+                console.log('record mapping:', t2 - t1);
+                return mappedRecords;
               })
             );
 

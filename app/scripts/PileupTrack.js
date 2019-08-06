@@ -1,8 +1,14 @@
-import { scaleLinear } from 'd3-scale';
+import { scaleLinear, scaleBand } from 'd3-scale';
+import { range } from 'd3-array';
 import * as PIXI from 'pixi.js';
 import { spawn, Thread, Worker } from 'threads';
 import Tiled1DPixiTrack from './Tiled1DPixiTrack';
 import { trackUtils } from './utils';
+
+function currTime() {
+  const d = new Date();
+  return d.getTime();
+}
 
 const shader = PIXI.Shader.from(`
 
@@ -53,6 +59,9 @@ class PileupTrack extends Tiled1DPixiTrack {
     // we last rendered everything
     this.drawnAtScale = scaleLinear();
     this.prevRows = [];
+
+    // graphics for highliting reads under the cursor
+    this.mouseOverGraphics = new PIXI.Graphics();
   }
 
   rerender(newOptions) {
@@ -80,19 +89,28 @@ class PileupTrack extends Tiled1DPixiTrack {
         this.prevRows
       ).then((toRender) => {
         // console.log('toRender', toRender);
+        const t1 = currTime();
+
+        const positions = new Float32Array(toRender.positionsBuffer);
+        const colors = new Float32Array(toRender.colorsBuffer);
+
+        // console.log('positions', positions);
+        // console.log('colors:', colors);
+
         const newGraphics = new PIXI.Graphics();
 
         this.prevRows = toRender.rows;
 
         const geometry = new PIXI.Geometry()
-          .addAttribute('position', toRender.positions, 2);// x,y
-        geometry.addAttribute('aColor', toRender.colors, 4);
+          .addAttribute('position', positions, 2);// x,y
+        geometry.addAttribute('aColor', colors, 4);
 
         const state = new PIXI.State();
         const mesh = new PIXI.Mesh(geometry, shader, state);
 
         newGraphics.addChild(mesh);
         this.pMain.x = this.position[0];
+
 
         if (this.segmentGraphics) {
           this.pMain.removeChild(this.segmentGraphics);
@@ -101,6 +119,10 @@ class PileupTrack extends Tiled1DPixiTrack {
         this.pMain.addChild(newGraphics);
         this.segmentGraphics = newGraphics;
 
+        this.yScaleBand = scaleBand()
+          .domain(range(0, this.prevRows.length))
+          .range([this.position[1], this.position[1] + this.dimensions[1]])
+          .paddingInner(0.2);
         this.drawnAtScale = scaleLinear()
           .domain(toRender.xScaleDomain)
           .range(toRender.xScaleRange);
@@ -113,6 +135,8 @@ class PileupTrack extends Tiled1DPixiTrack {
 
         this.draw();
         this.animate();
+        const t2 = currTime();
+        console.log('renderSegments 1', t2 - t1);
       });
     });
   }
@@ -122,6 +146,29 @@ class PileupTrack extends Tiled1DPixiTrack {
       .domain([0, this.prevRows.length])
       .range([0, this.dimensions[1]]);
     trackUtils.drawAxis(this, valueScale);
+  }
+
+  getMouseOverHtml(trackX, trackY) {
+    if (this.yScaleBand) {
+      const eachBand = this.yScaleBand.step();
+      const index = Math.round((trackY / eachBand));
+
+
+      if (index >= 0 && index < this.prevRows.length) {
+        const row = this.prevRows[index];
+
+        for (const read of row) {
+          const readTrackFrom = this._xScale(read.from);
+          const readTrackTo = this._xScale(read.to);
+
+          if (readTrackFrom <= trackX && trackX <= readTrackTo) {
+            return (`Read length: ${read.to - read.from}<br>`
+              + `CIGAR: ${read.cigar || ''} MD: ${read.md || ''}`);
+          }
+        }
+      }
+      // var val = self.yScale.domain()[index];
+    }
   }
 
   calculateZoomLevel() {
