@@ -1,3 +1,5 @@
+import AxisPixi from '../AxisPixi';
+
 const range = (start, end) => {
   const values = [];
   for (let i = start; i < end; i++) {
@@ -221,9 +223,68 @@ const calculate1DVisibleTiles = (tilesetInfo, scale) => {
   return tiles;
 };
 
+const drawAxis = (track, valueScale) => {
+  if (!track.axis) {
+    track.axis = new AxisPixi(track);
+    track.pBase.addChild(track.axis.pAxis);
+  }
+  // either no axis position is specified
+  if (!track.options.axisPositionVertical && !track.options.axisPositionHorizontal) {
+    track.axis.clearAxis();
+    return;
+  }
+
+  if (track.options.axisPositionVertical && track.options.axisPositionVertical === 'hidden') {
+    track.axis.clearAxis();
+    return;
+  }
+
+  if (track.options.axisPositionHorizontal && track.options.axisPositionHorizontal === 'hidden') {
+    track.axis.clearAxis();
+    return;
+  }
+
+  const margin = track.options.axisMargin || 0;
+
+  if (
+    track.options.axisPositionHorizontal === 'left'
+    || track.options.axisPositionVertical === 'top'
+  ) {
+    // left axis are shown at the beginning of the plot
+    track.axis.pAxis.position.x = track.position[0] + margin;
+    track.axis.pAxis.position.y = track.position[1];
+
+    track.axis.drawAxisRight(valueScale, track.dimensions[1]);
+  } else if (
+    track.options.axisPositionHorizontal === 'outsideLeft'
+    || track.options.axisPositionVertical === 'outsideTop'
+  ) {
+    // left axis are shown at the beginning of the plot
+    track.axis.pAxis.position.x = track.position[0] + margin;
+    track.axis.pAxis.position.y = track.position[1];
+
+    track.axis.drawAxisLeft(valueScale, track.dimensions[1]);
+  } else if (
+    track.options.axisPositionHorizontal === 'right'
+    || track.options.axisPositionVertical === 'bottom'
+  ) {
+    track.axis.pAxis.position.x = track.position[0] + track.dimensions[0] - margin;
+    track.axis.pAxis.position.y = track.position[1];
+    track.axis.drawAxisLeft(valueScale, track.dimensions[1]);
+  } else if (
+    track.options.axisPositionHorizontal === 'outsideRight'
+    || track.options.axisPositionVertical === 'outsideBottom'
+  ) {
+    track.axis.pAxis.position.x = track.position[0] + track.dimensions[0] - margin;
+    track.axis.pAxis.position.y = track.position[1];
+    track.axis.drawAxisRight(valueScale, track.dimensions[1]);
+  }
+};
+
 const trackUtils = {
   calculate1DZoomLevel,
   calculate1DVisibleTiles,
+  drawAxis,
 };
 
 export default trackUtils;

@@ -92,6 +92,7 @@ class PileupTrack extends Tiled1DPixiTrack {
         const mesh = new PIXI.Mesh(geometry, shader, state);
 
         newGraphics.addChild(mesh);
+        this.pMain.x = this.position[0];
 
         if (this.segmentGraphics) {
           this.pMain.removeChild(this.segmentGraphics);
@@ -110,9 +111,17 @@ class PileupTrack extends Tiled1DPixiTrack {
           this.drawnAtScale,
         );
 
+        this.draw();
         this.animate();
       });
     });
+  }
+
+  draw() {
+    const valueScale = scaleLinear()
+      .domain([0, this.prevRows.length])
+      .range([0, this.dimensions[1]]);
+    trackUtils.drawAxis(this, valueScale);
   }
 
   calculateZoomLevel() {

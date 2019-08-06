@@ -294,14 +294,14 @@ expose(
           if (firstSub.type === 'S') {
             // soft clipping at the beginning
             substitutions.push({
-              pos: -firstSub.length,
+              pos: -firstSub.length + 1,
               type: 'S',
               length: firstSub.length,
             });
           } else if (lastSub.type === 'S') {
             // soft clipping at the end
             substitutions.push({
-              pos: (segment.to - segment.from),
+              pos: (segment.to - segment.from) + 1,
               length: lastSub.length,
               type: 'S',
             });
@@ -359,6 +359,8 @@ expose(
     const positions = allPositions.slice(0, currPosition);
     const colors = allColors.slice(0, currColor);
 
+    console.log('rects:', positions.length / 6);
+    console.log('rows:', rows.length);
     return {
       rows,
       positions,

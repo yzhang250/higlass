@@ -1260,6 +1260,46 @@ export const OPTIONS_INFO = {
     },
   },
 
+  minZoom: {
+    name: 'Zoom limit',
+    inlineOptions: {
+      none: { name: 'None', value: null },
+    },
+    generateOptions: (track) => {
+      if (track.maxZoom) {
+        const inlineOptions = [];
+
+        for (let i = 0; i <= track.maxZoom; i++) {
+          const { maxWidth, binsPerDimension, maxZoom } = track;
+
+          let maxResolutionSize = 1;
+          let resolution = 1;
+
+          if (track.resolutions) {
+            const sortedResolutions = track.resolutions.map(x => +x).sort((a, b) => b - a);
+            ([maxResolutionSize] = sortedResolutions);
+            resolution = sortedResolutions[i];
+          } else {
+            resolution = track.maxWidth / ((2 ** i) * track.binsPerDimension);
+            maxResolutionSize = maxWidth / ((2 ** maxZoom) * binsPerDimension);
+          }
+
+          const pp = precisionPrefix(maxResolutionSize, resolution);
+          const f = formatPrefix(`.${pp}`, resolution);
+          const formattedResolution = f(resolution);
+
+          inlineOptions.push({
+            name: formattedResolution,
+            value: i.toString(),
+          });
+          //
+        }
+
+        return inlineOptions;
+      } return [];
+    },
+  },
+
   valueColumn: {
     name: 'Value column',
     inlineOptions: {

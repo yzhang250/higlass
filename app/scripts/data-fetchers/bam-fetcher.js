@@ -58,6 +58,7 @@ class BAMDataFetcher {
 
       const retVal = {
         tile_size: TILE_SIZE,
+        bins_per_dimension: TILE_SIZE,
         max_zoom: Math.ceil(
           Math.log(chromInfo.totalLength / TILE_SIZE) / Math.log(2)
         ),
@@ -108,9 +109,18 @@ class BAMDataFetcher {
   }
 
   tile(z, x) {
+    const MAX_TILE_WIDTH = 200000;
+
     return this.tilesetInfo().then((tsInfo) => {
       const tileWidth = +tsInfo.max_width / 2 ** (+z);
       const recordPromises = [];
+
+      console.log(`z: ${z}, tileWidth: ${tileWidth}`);
+
+      if (tileWidth > MAX_TILE_WIDTH) {
+        // this.errorTextText('Zoomed out too far for this track. Zoomin further to see reads');
+        return new Promise((resolve, reject) => resolve([]));
+      }
 
       // get the bounds of the tile
       let minX = tsInfo.min_pos[0] + x * tileWidth;
@@ -151,8 +161,14 @@ class BAMDataFetcher {
             // the end of the region is within this chromosome
             recordPromises.push(
               this.bamFile.getRecordsForRange(
-                chromName, startPos, endPos
-              ).then(records => records.map(rec => bamRecordToJson(rec)))
+                chromName, startPos, endPos, {
+                  // viewAsPairs: true,
+                  // maxInsertSize: 2000,
+                }
+              ).then(records => {
+                // console.log('records:', records);
+                return records.map(rec => bamRecordToJson(rec));
+              })
             );
 
             // end the loop because we've retrieved the last chromosome

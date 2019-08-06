@@ -1753,6 +1753,25 @@ export const TRACKS_INFO = [
       valueColumn: null
     },
   },
+  {
+    type: 'pileup',
+    datatype: ['reads'],
+    local: false,
+    minHeight: 55,
+    orientation: '1d-horizontal',
+    name: 'PileUp track',
+    thumbnail: null,
+    availableOptions: [
+      'axisPositionHorizontal',
+      'axisLabelFormatting',
+      // 'minZoom'
+    ],
+    defaultOptions: {
+      // minZoom: null,
+      axisPositionHorizontal: 'right',
+      axisLabelFormatting: 'normal',
+    },
+  },
 ];
 
 export default TRACKS_INFO;
