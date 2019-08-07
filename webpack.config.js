@@ -19,6 +19,7 @@ module.exports = (env, argv) => ({
   context: `${__dirname}/app`,
   entry: {
     hglib: './scripts/hglib.js',
+    // 'data-worker': './scripts/data-fetchers/bam-fetcher-worker.js',
     // worker: './scripts/worker.js',
   },
   watch: !!argv.watch,
@@ -35,7 +36,7 @@ module.exports = (env, argv) => ({
       path.resolve(__dirname, 'node_modules'),
       path.resolve(__dirname, 'lib', 'vendor')
     ],
-    publicPath: '/'
+    publicPath: '/',
   },
   output: {
     path: `${__dirname}/build`,

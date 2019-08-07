@@ -49,9 +49,8 @@ class PileupTrack extends Tiled1DPixiTrack {
   constructor(context, options) {
     super(context, options);
 
-    this.renderSegments = spawn(
-      new Worker('./workers/PileupTrackWorker')
-    );
+    this.worker = this.dataFetcher.worker;
+
     // we scale the entire view up until a certain point
     // at which point we redraw everything to get rid of
     // artifacts
@@ -71,17 +70,17 @@ class PileupTrack extends Tiled1DPixiTrack {
   updateExistingGraphics() {
     const allSegments = {};
 
-    for (const tile of Object.values(this.fetchedTiles)) {
-      // console.log('ueg tile:', tile);
-      for (const segment of tile.tileData) {
-        allSegments[segment.id] = segment;
-      }
-    }
+    // for (const tile of Object.values(this.fetchedTiles)) {
+    //   // console.log('ueg tile:', tile);
+    //   for (const segment of tile.tileData) {
+    //     allSegments[segment.id] = segment;
+    //   }
+    // }
 
-
-    this.renderSegments.then((renderSegments) => {
-      const renderedSegments = renderSegments(
-        Object.values(allSegments),
+    this.worker.then((tileFunctions) => {
+      const renderedSegments = tileFunctions.renderSegments(
+        this.dataFetcher.uid,
+        Object.keys(this.fetchedTiles),
         this._xScale.domain(),
         this._xScale.range(),
         this.position,
@@ -136,7 +135,6 @@ class PileupTrack extends Tiled1DPixiTrack {
         this.draw();
         this.animate();
         const t2 = currTime();
-        console.log('renderSegments 1', t2 - t1);
       });
     });
   }
