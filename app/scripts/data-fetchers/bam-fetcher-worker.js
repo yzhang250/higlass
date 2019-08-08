@@ -2,17 +2,12 @@ import { text } from 'd3-request';
 import { bisector, range } from 'd3-array';
 import { tsvParseRows } from 'd3-dsv';
 import { scaleLinear, scaleBand } from 'd3-scale';
-import { expose, Transfer } from "threads/worker";
+import { expose, Transfer } from 'threads/worker';
 import { BamFile } from '@gmod/bam';
 
-function currTime() {
-  const d = new Date();
-  return d.getTime();
-}
-
-/////////////////////////////////////////////////
-/// ChromInfo
-/////////////////////////////////////////////////
+// ///////////////////////////////////////////////
+// / ChromInfo
+// ///////////////////////////////////////////////
 
 const chromInfoBisector = bisector(d => d.pos).left;
 
@@ -116,9 +111,9 @@ function ChromosomeInfo(filepath, success) {
   });
 }
 
-/////////////////////////////////////////////////////
-/// End Chrominfo
-/////////////////////////////////////////////////////
+// ///////////////////////////////////////////////////
+// / End Chrominfo
+// ///////////////////////////////////////////////////
 
 const bamRecordToJson = bamRecord => ({
   id: bamRecord._id,
@@ -157,13 +152,10 @@ const init = (uid, bamUrl, chromSizesUrl) => {
   dataConfs[uid] = {
     bamUrl, chromSizesUrl
   };
-  console.log('1 dataConfs:', dataConfs);
 };
 
 const tilesetInfo = (uid) => {
-  console.log('dataConfs:', dataConfs);
   const { chromSizesUrl, bamUrl } = dataConfs[uid];
-  console.log('uid:', uid);
 
   return Promise.all(
     [chromSizes[chromSizesUrl], bamHeaders[bamUrl]]
@@ -198,9 +190,6 @@ const tile = async (uid, z, x) => {
   return tilesetInfo(uid).then((tsInfo) => {
     const tileWidth = +tsInfo.max_width / 2 ** (+z);
     const recordPromises = [];
-
-    console.log('bamFile', bamFile);
-    console.log(`z: ${z}, tileWidth: ${tileWidth}`);
 
     if (tileWidth > MAX_TILE_WIDTH) {
       // this.errorTextText('Zoomed out too far for this track. Zoomin further to see reads');
@@ -253,11 +242,7 @@ const tile = async (uid, z, x) => {
                 // maxInsertSize: 2000,
               }
             ).then((records) => {
-              // console.log('records:', records);
-              const t1 = currTime();
-              const mappedRecords = records.map(rec => bamRecordToJson(rec));
-              const t2 = currTime();
-              tileValues[`${uid}.${z}.${x}`] = mappedRecords;
+              tileValues[`${uid}.${z}.${x}`] = records.map(rec => bamRecordToJson(rec));
 
               return [];
             })
@@ -308,9 +293,9 @@ const fetchTilesDebounced = async (uid, tileIds) => {
   });
 };
 
-///////////////////////////////////////////////////
-/// Render Functions
-///////////////////////////////////////////////////
+// /////////////////////////////////////////////////
+// / Render Functions
+// /////////////////////////////////////////////////
 
 const parseMD = (mdString, useCounts) => {
   let currPos = 1;
@@ -355,11 +340,10 @@ function segmentsToRows(segments, optionsIn) {
     optionsIn || {}
   );
 
-  const t1 = currTime();
+  const t1 = performance.now();
   segments.sort((a, b) => a.from - b.from);
-  const rows = [];
 
-  const t11 = currTime();
+  const t11 = performance.now();
   const rowIds = new Set(prevRows.flatMap(x => x).map(x => x.id));
 
   // console.log('flatMap:', prevRows.flatMap(x => x).map(x => x.id));
@@ -381,7 +365,8 @@ function segmentsToRows(segments, optionsIn) {
     row => row.filter(segment => segmentIds.has(segment.id))
   );
 
-  const t12 = currTime();
+  const t12 = performance.now();
+  // eslint-disable-next-line
   console.log('segment times', t12 - t11);
 
   let currRow = 0;
@@ -479,13 +464,14 @@ function segmentsToRows(segments, optionsIn) {
     currRow += 1;
   }
 
-  const t2 = currTime();
-  console.log('segmentsToRows time', t2 - t1, '# of segments:', segments.length);
+  const t2 = performance.now();
+  // eslint-disable-next-line
+  console.log('segmentsToRows took', t2 - t1, '# of segments:', segments.length);
   return outputRows;
 }
 
 const STARTING_POSITIONS_ARRAY_LENGTH = 2 ** 20;
-const STARTING_COLORS_ARRAY_LENGTH = 2 ** 21;
+const STARTING_COLORS_ARRAY_LENGTH = 2 ** 16;
 
 let allPositionsLength = STARTING_POSITIONS_ARRAY_LENGTH;
 let allColorsLength = STARTING_COLORS_ARRAY_LENGTH;
@@ -493,10 +479,12 @@ let allColorsLength = STARTING_COLORS_ARRAY_LENGTH;
 let allPositions = new Float32Array(allPositionsLength);
 let allColors = new Float32Array(allColorsLength);
 
-const renderSegments = (uid, tileIds, domain, scaleRange, position, dimensions, prevRows) => {
+const renderSegments = (
+  uid, tileIds, domain, scaleRange, position, dimensions, prevRows
+) => {
   const allSegments = {};
 
-  for (let tileId of tileIds) {
+  for (const tileId of tileIds) {
     for (const segment of tileValues[`${uid}.${tileId}`]) {
       allSegments[segment.id] = segment;
     }
@@ -504,11 +492,8 @@ const renderSegments = (uid, tileIds, domain, scaleRange, position, dimensions, 
 
   const segmentList = Object.values(allSegments);
   const xScale = scaleLinear().domain(domain).range(scaleRange);
-  const t1 = currTime();
 
   let currPosition = 0;
-
-  let currColor = 0;
 
   const addPosition = (x1, y1) => {
     if (currPosition > allPositionsLength - 2) {
@@ -522,8 +507,10 @@ const renderSegments = (uid, tileIds, domain, scaleRange, position, dimensions, 
     allPositions[currPosition++] = y1;
   };
 
-  const addColor = (r, g, b, a, n) => {
-    if (currColor >= allColorsLength - n * 4) {
+  let currColor = 0;
+
+  const addColor = (colorCode, n) => {
+    if (currColor >= allColorsLength) {
       allColorsLength *= 2;
       const prevAllColors = allColors;
 
@@ -531,11 +518,8 @@ const renderSegments = (uid, tileIds, domain, scaleRange, position, dimensions, 
       allColors.set(prevAllColors);
     }
 
-    for (let k = 0; k < n; k++) {
-      allColors[currColor++] = r;
-      allColors[currColor++] = g;
-      allColors[currColor++] = b;
-      allColors[currColor++] = a;
+    for (let i = 0; i < n; i++) {
+      allColors[currColor++] = colorCode;
     }
   };
 
@@ -544,9 +528,7 @@ const renderSegments = (uid, tileIds, domain, scaleRange, position, dimensions, 
   //   console.log(x.cigar, x);
   // })
 
-  const rows = segmentsToRows(segmentList, {
-    prevRows,
-  });
+  const rows = segmentsToRows(segmentList, { prevRows });
   const d = range(0, rows.length);
   const r = [position[1], position[1] + dimensions[1]];
   const yScale = scaleBand().domain(d).range(r).paddingInner(0.2);
@@ -560,20 +542,20 @@ const renderSegments = (uid, tileIds, domain, scaleRange, position, dimensions, 
   // currGraphics.clear();
   // currGraphics.lineStyle(1, 0x000000);
 
-  let mds = 0;
+  let xLeft;
+  let xRight;
+  let yTop;
+  let yBottom;
 
-  let xLeft; let xRight; let yTop; let
-    yBottom;
+  const t1 = performance.now();
 
-  rows.map((row, i) => {
-    row.map((segment, j) => {
-      const from = xScale(segment.from);
-      const to = xScale(segment.to);
+  rows.forEach((row, i) => {
+    row.forEach((segment, j) => {
       // console.log('from:', from, 'to:', to);
       // console.log('yScale(i)', yScale(i), yScale.bandwidth());
 
-      xLeft = from;
-      xRight = to;
+      xLeft = xScale(segment.from);
+      xRight = xScale(segment.to);
       yTop = yScale(i);
       yBottom = yTop + yScale.bandwidth();
       // currGraphics.beginFill(0xffffff);
@@ -591,7 +573,7 @@ const renderSegments = (uid, tileIds, domain, scaleRange, position, dimensions, 
       addPosition(xRight, yTop);
       addPosition(xRight, yBottom);
 
-      addColor(0.8, 0.8, 0.8, 1, 6);
+      addColor(0, 6);
 
       if (segment.md) {
         const substitutions = parseMD(segment.md);
@@ -621,8 +603,6 @@ const renderSegments = (uid, tileIds, domain, scaleRange, position, dimensions, 
         // console.log('cigarSubs', segment.cigar, cigarSubs);
 
         for (const substitution of substitutions) {
-          mds += 1;
-
           xLeft = xScale(segment.from + substitution.pos - 1);
           xRight = xLeft + Math.max(1, xScale(substitution.length) - xScale(0));
           yTop = yScale(i);
@@ -636,19 +616,22 @@ const renderSegments = (uid, tileIds, domain, scaleRange, position, dimensions, 
           addPosition(xRight, yTop);
           addPosition(xRight, yBottom);
 
-          if (substitution.base === 'A') {
-            addColor(0, 0, 1, 1, 6);
-          } else if (substitution.base === 'C') {
-            addColor(1, 0, 0, 1, 6);
-          } else if (substitution.base === 'G') {
-            addColor(0, 1, 0, 1, 6);
-          } else if (substitution.base === 'T') {
-            addColor(1, 1, 0, 1, 6);
-          } else if (substitution.type === 'S') {
-            addColor(0, 1, 1, 0.5, 6);
-          } else {
-            addColor(0, 0, 0, 1, 6);
-          }
+          // Convert the character into an integer
+          const charCode = (
+            (substitution.base && substitution.base.charCodeAt(0)) || 1
+          );
+          // In the following `charCode % 65` will be `0` IFF the code is an A.
+          // If we invert the zero to a 1 using `!` and multiply by the
+          // corresponding color-code (e.g., 0, 1, 2, ...) we can get the code
+          // without any if statement and avoid branching issues.
+          addColor(
+            !(charCode % 65) // A == 1
+            + !(charCode % 67) * 2 // C == 2
+            + !(charCode % 71) * 3 // G == 3
+            + !(charCode % 84) * 4 // T == 4
+            + !(charCode % 83) * 5, // S == 5
+            6
+          );
         }
       }
     });
@@ -664,8 +647,6 @@ const renderSegments = (uid, tileIds, domain, scaleRange, position, dimensions, 
 
   // graphics.addChild(mesh);
   // const t2 = currTime();
-  // console.log('mds:', mds);
-  // console.log('perSegment', 100 * (t2 - t1) / numSegments, 'drawSegments', t2 - t1, '# of segments:', numSegments);
 
   const positionsBuffer = allPositions.slice(0, currPosition).buffer;
   const colorsBuffer = allColors.slice(0, currColor).buffer;
@@ -683,8 +664,11 @@ const renderSegments = (uid, tileIds, domain, scaleRange, position, dimensions, 
     xScaleRange: scaleRange,
   };
 
-  return Transfer(objData,
-    [objData.positionsBuffer, colorsBuffer]);
+  // eslint-disable-next-line
+  console.log('renderSegments took', performance.now() - t1);
+
+  // Fritz: why are the two buffers returned twice?
+  return Transfer(objData, [positionsBuffer, colorsBuffer]);
 };
 
 const tileFunctions = {

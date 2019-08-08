@@ -1,43 +1,55 @@
 import { scaleLinear, scaleBand } from 'd3-scale';
 import { range } from 'd3-array';
 import * as PIXI from 'pixi.js';
-import { spawn, Thread, Worker } from 'threads';
+
 import Tiled1DPixiTrack from './Tiled1DPixiTrack';
 import { trackUtils } from './utils';
 
-function currTime() {
-  const d = new Date();
-  return d.getTime();
-}
+import FS from './PileupTrack.fs';
+import VS from './PileupTrack.vs';
 
-const shader = PIXI.Shader.from(`
+const COLORS = [
+  [0, 0, 0, 0.25], // base
+  [0, 0, 1, 1], // A
+  [1, 0, 0, 1], // C
+  [0, 1, 0, 1], // G
+  [1, 1, 0, 1], // T
+  [0, 1, 1, 0.75], // S
+];
 
-    attribute vec2 position;
-    attribute vec4 aColor;
+const createColorTexture = (colors = COLORS) => {
+  const colorTexRes = Math.max(2, Math.ceil(Math.sqrt(colors.length)));
+  const rgba = new Float32Array(colorTexRes ** 2 * 4);
+  colors.forEach((color, i) => {
+    rgba[i * 4] = color[0]; // r
+    rgba[i * 4 + 1] = color[1]; // g
+    rgba[i * 4 + 2] = color[2]; // b
+    rgba[i * 4 + 3] = color[3]; // a
+  });
 
-    uniform mat3 projectionMatrix;
-    uniform mat3 translationMatrix;
+  return [
+    PIXI.Texture.fromBuffer(
+      rgba,
+      colorTexRes,
+      colorTexRes,
+    ),
+    colorTexRes
+  ];
+};
 
-    varying vec4 vColor;
-    
-    void main(void)
-    {
-        vColor = aColor;
-        gl_Position = vec4((projectionMatrix * translationMatrix * vec3(position, 1.0)).xy, 0.0, 1.0);
-    }
+const [COLOR_TEX, COLOR_TEX_RES] = createColorTexture();
 
-`,
-`  
-varying vec4 vColor;
+const uniforms = new PIXI.UniformGroup({
+  uColorTex: COLOR_TEX,
+  uColorTexRes: COLOR_TEX_RES,
+});
 
-    void main(void) {
-        gl_FragColor = vColor;
-    }
-`);
+const shader = PIXI.Shader.from(VS, FS, uniforms);
 
 const scaleScalableGraphics = (graphics, xScale, drawnAtScale) => {
-  const tileK = (drawnAtScale.domain()[1] - drawnAtScale.domain()[0])
-    / (xScale.domain()[1] - xScale.domain()[0]);
+  const [atScaleStart, atScaleEnd] = drawnAtScale.domain();
+  const [xScaleStart, xScaleEnd] = xScale.domain();
+  const tileK = (atScaleEnd - atScaleStart) / (xScaleEnd - xScaleStart);
   const newRange = xScale.domain().map(drawnAtScale);
 
   const posOffset = newRange[0];
@@ -68,8 +80,6 @@ class PileupTrack extends Tiled1DPixiTrack {
   }
 
   updateExistingGraphics() {
-    const allSegments = {};
-
     // for (const tile of Object.values(this.fetchedTiles)) {
     //   // console.log('ueg tile:', tile);
     //   for (const segment of tile.tileData) {
@@ -78,7 +88,7 @@ class PileupTrack extends Tiled1DPixiTrack {
     // }
 
     this.worker.then((tileFunctions) => {
-      const renderedSegments = tileFunctions.renderSegments(
+      tileFunctions.renderSegments(
         this.dataFetcher.uid,
         Object.keys(this.fetchedTiles),
         this._xScale.domain(),
@@ -86,23 +96,25 @@ class PileupTrack extends Tiled1DPixiTrack {
         this.position,
         this.dimensions,
         this.prevRows
-      ).then((toRender) => {
-        // console.log('toRender', toRender);
-        const t1 = currTime();
-
-        const positions = new Float32Array(toRender.positionsBuffer);
-        const colors = new Float32Array(toRender.colorsBuffer);
-
-        // console.log('positions', positions);
-        // console.log('colors:', colors);
+      ).then(({
+        rows,
+        positionsBuffer,
+        colorsBuffer,
+        xScaleDomain,
+        xScaleRange,
+      }) => {
+        const t1 = performance.now();
 
         const newGraphics = new PIXI.Graphics();
 
-        this.prevRows = toRender.rows;
+        const positions = new Float32Array(positionsBuffer);
+        const colors = new Float32Array(colorsBuffer);
 
-        const geometry = new PIXI.Geometry()
-          .addAttribute('position', positions, 2);// x,y
-        geometry.addAttribute('aColor', colors, 4);
+        this.prevRows = rows;
+
+        const geometry = new PIXI.Geometry();
+        geometry.addAttribute('aPosition', positions, 2); // x,y
+        geometry.addAttribute('aColorCode', colors);
 
         const state = new PIXI.State();
         const mesh = new PIXI.Mesh(geometry, shader, state);
@@ -123,8 +135,8 @@ class PileupTrack extends Tiled1DPixiTrack {
           .range([this.position[1], this.position[1] + this.dimensions[1]])
           .paddingInner(0.2);
         this.drawnAtScale = scaleLinear()
-          .domain(toRender.xScaleDomain)
-          .range(toRender.xScaleRange);
+          .domain(xScaleDomain)
+          .range(xScaleRange);
 
         scaleScalableGraphics(
           this.segmentGraphics,
@@ -134,7 +146,8 @@ class PileupTrack extends Tiled1DPixiTrack {
 
         this.draw();
         this.animate();
-        const t2 = currTime();
+        // eslint-disable-next-line
+        console.log(`Sync work took ${performance.now() - t1} msec`);
       });
     });
   }
@@ -167,6 +180,7 @@ class PileupTrack extends Tiled1DPixiTrack {
       }
       // var val = self.yScale.domain()[index];
     }
+    return null;
   }
 
   calculateZoomLevel() {
