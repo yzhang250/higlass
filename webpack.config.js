@@ -59,10 +59,13 @@ module.exports = (env, argv) => ({
       new OptimizeCSSAssetsPlugin()
     ]
   },
+  resolve: {
+    extensions: ['*', '.js', '.fs', '.vs']
+  },
   module: {
     rules: [
       {
-        test: /\.jsx?$/,
+        test: /\.(jsx?|fs|vs)$/,
         include: [
           path.resolve(__dirname, 'app/scripts'),
           path.resolve(__dirname, 'test'),
@@ -208,7 +211,6 @@ module.exports = (env, argv) => ({
   },
   plugins: [
     // Expose version numbers.
-    // 
     new webpack.DefinePlugin({
       VERSION: JSON.stringify(packageJson.version),
     }),
