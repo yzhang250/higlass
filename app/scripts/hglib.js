@@ -6,6 +6,12 @@ export { default as ChromosomeInfo } from './ChromosomeInfo';
 export { default as HiGlassComponent } from './HiGlassComponent';
 export { default as HiGlassTrackComponent, trackViewer } from './HiGlassTrackComponent';
 
+// these exports can be used to create new tracks in outside
+// environments (e.g. Observable)
+export { default as SVGTrack } from './SVGTrack';
+export { default as TiledPixiTrack } from './TiledPixiTrack';
+export { default as HorizontalGeneAnnotationsTrack } from './HorizontalGeneAnnotationsTrack';
+
 export { default as schema } from '../schema.json';
 
 // export functions that are useful for testing

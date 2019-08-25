@@ -1,14 +1,33 @@
-## v1.6.6
+## Next release
 
+_[Detailed changes since v1.6.7](https://github.com/higlass/higlass/compare/v1.6.7...develop)_
+
+- Implemented a genbank data fetcher for gene annotation tracks
 - Added support for value scale zooming
 
-_[Detailed changes since v1.6.6](https://github.com/higlass/higlass/compare/v1.6.5...v1.6.6)_
+## v1.6.7
 
-## v1.6.5 
+- Fix #747: the tooltip value wasn't shown because of an issue related to minimizing the code
+- Fix #743: the tooltip position now incorporates the scroll position
+- Fix drag handle styling (typo)
+- Make drag handle area (not the style) bigger so it's easier to grab
+
+_[Detailed changes since v1.6.6](https://github.com/higlass/higlass/compare/v1.6.6...v1.6.7)_
+
+# v1.6.6
+
+- Fix #732: Remove the hold ALT feature as it's confusion and leads to a weird bug.
+- Fix leaking dark mode setting
+- Change option to activate dark theme from `isDarkTheme: true` to `theme: 'dark'`. Also, use `setTheme()` of the JsAPI instead of `setDarkTheme()` from now on.
+- Copy the tile data before mutation to fix an issue when displaying the same tileset twice (once in the upper right and lower left triangle)
+
+_[Detailed changes since v1.6.5](https://github.com/higlass/higlass/compare/v1.6.5...v1.6.6)_
+
+## v1.6.5
 
 - Fixed the replace track bug (where replacing a center track wouldn't do anything)
 
-_[Detailed changes since v1.6.5](https://github.com/higlass/higlass/compare/v1.6.4...v1.6.5)_
+_[Detailed changes since v1.6.4](https://github.com/higlass/higlass/compare/v1.6.4...v1.6.5)_
 
 ## v1.6.4
 
@@ -40,6 +59,7 @@ _[Detailed changes since v1.6.1](https://github.com/higlass/higlass/compare/v1.6
 - Fixed: `Save and Close` in the ViewConfigEditor works properly
 
 _[Detailed changes since v1.6.0](https://github.com/higlass/higlass/compare/v1.6.0...v1.6.1)_
+>>>>>>> 12e938e043cc73687a13d7cecdf90d0e893691cc
 
 ## v1.6.0
 
