@@ -47,6 +47,10 @@ class MapboxTilesTrack extends OSMTilesTrack {
       ? +this.options.tileSize
       : 256;
 
+    if (this.options && this.options.oldApi) {
+      return `https://api.mapbox.com/v4/${mapStyle}/${tileZxy[0]}/${tileZxy[1]}/${tileZxy[2]}.png?access_token=${this.options.accessToken}`;
+    }
+
     return `https://api.mapbox.com/styles/v1/mapbox/${mapStyle}/tiles/${tileSize}/${tileZxy[0]}/${tileZxy[1]}/${tileZxy[2]}?access_token=${this.options.accessToken}`;
   }
 }
