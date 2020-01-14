@@ -1,12 +1,62 @@
-## Next release
+** Next Release **
 
 - Fix `api.hideTrackChooser`
 
-_[Detailed changes since v1.6.10](https://github.com/higlass/higlass/compare/v1.6.9...v1.6.10)_
+## v1.8.0
+
+- Added the option to flip 2D annotations across the diagonal
+- Update heatmap docs with colorRange parameter
+- Update BedLikeTrack to display strand-specific entries
+- Added 'segment' style to the BedLikeTrack
+- Updated default plot types when adding tracks
+- When adding multiple tracks at once that have different datatype, each track is added with its default plot type. The plot type chooser is hidden.
+- In `HorizontalLine1DPixiTrack`, make sure that `this.valueScale` is set when `getMouseOverHtml()` is called.
+- VerticalRule, HorizontalRule, and CrossRule tracks included in SVG and PNG exports.
+
+_[Detailed changes since v1.7.2](https://github.com/higlass/higlass/compare/v1.7.2...v1.8.0)_
+
+## v1.7.2
+
+- Refactored the scroll options and `bounded` into a new property called `sizeMode`. There are now 4 different size modes, which determine the visible height of the HiGlass instance:
+  1. `default`: the height is given by the sum of the tracks' heights
+  2. `bounded`: tells the HiGlass component to bind the height to the parent container by dynamically adjusting the height of center tracks.
+  3. `scroll`: will activate scrolling by stretching HiGlass' drawing surface to the extent of parent DOM element and hiding overflowing content in the x direction and allowing to scroll when content overflows in the y direction.
+  4. `overflow`: same as `scroll` except that you can't scroll. This mode is only needed when you want to dynamically switch between scrolling and pan+zooming.
+
+_[Detailed changes since v1.7.0](https://github.com/higlass/higlass/compare/v1.7.0...v1.7.2)_
+
+## v1.7.1
+
+_Same as v1.7.0. This is just due to a glitch at npmjs.org._
+
+## v1.7.0
+
+- Add support for scrollable views. Activate via the option `scrollable: true`. Once you activate scrollable views all views are automatically zoomfixed! See [http://localhost:8080/others/scrollable-container.html](others/scrollable-container.html) for an example.
+- Add `option(key, value)` to the JS API for changing options. It supports getting all options when `value` is ommited and setting `scrollable`.
+- Properly display "Loading" while loading tileset info
+- Add support to ignore offscreen values for value scale locking by setting `ignoreOffScreenValues: true` for a lock group in `locksDict`.
+
+_[Detailed changes since v1.6.12](https://github.com/higlass/higlass/compare/v1.6.12...v1.7.0)_
+
+## v1.6.12
+
+- Rename React lifecycle methods according to their recommendations
+- Add support for borders (via the `stroke`, `strokeWidth`, `strokeOpacity`, and `strokePos` options) and outlines (via the `outline`, `outlineWidth`, `outlineOpacity`, and `outlinePos` options) to overlays. See [http://localhost:8080/apis/svg.html?/viewconfs/fancy-overlays.json](http://localhost:8080/apis/svg.html?/viewconfs/fancy-overlays.json) for an example.
+- Fixed horizontal rule bug (from Slack)
+
+_[Detailed changes since v1.6.11](https://github.com/higlass/higlass/compare/v1.6.11...v1.6.12)_
+
+## v1.6.11
+
+- Overlay track bug fixes
+- Added `minWidth` and `minHeight` options to `overlays` for better guidance
+- Allow viewconf JSON to override minimum track height or width defaults, when a track specifies a `minHeight` or `minWidth` parameter
+
+_[Detailed changes since v1.6.10](https://github.com/higlass/higlass/compare/v1.6.10...v1.6.11)_
 
 ## v1.6.10
 
-- Add API call for show track chooser (hgApi. showTrackChooser()`)
+- Add API call for show track chooser (`hgApi.showTrackChooser()`)
 - Limit icon size in plot type chooser
 - Add non-gzipped support to genbank-fetcher
 - Better error handling for genbank fetcher

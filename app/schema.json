@@ -94,10 +94,11 @@
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
-                  "uid": { "$ref": "#/definitions/locks/slug" }
+                  "uid": { "$ref": "#/definitions/locks/slug" },
+                  "ignoreOffScreenValues": { "type": "boolean" }
                 },
                 "patternProperties": {
-                  "^(?!uid).": {
+                  "^(?!(uid|ignoreOffScreenValues)).": {
                     "type": "object",
                     "additionalProperties": false,
                     "required": ["view", "track"],
@@ -185,7 +186,23 @@
         "properties": {
           "chromInfoPath": { "type": "string" },
           "includes": { "type": "array" },
-          "options": { "type": "object" },
+          "options": {
+            "type": "object",
+            "properties": {
+              "extent": { "type": "array" },
+              "minWidth": { "type": "number" },
+              "fill": { "type": "string" },
+              "fillOpacity": { "type": "number" },
+              "stroke": { "type": "string" },
+              "strokeOpacity": { "type": "number" },
+              "strokeWidth": { "type": "number" },
+              "strokePos": { "type": ["string", "array"] },
+              "outline": { "type": "string" },
+              "outlineOpacity": { "type": "number" },
+              "outlineWidth": { "type": "number" },
+              "outlinePos": { "type": ["string", "array"] }
+            }
+          },
           "type": { "type": "string" },
           "uid": { "type": "string" }
         }
@@ -271,8 +288,6 @@
           "height": { "type": "number" },
           "local": { "type": "boolean" },
           "maxWidth": { "type": "number" },
-          "minHeight": { "type": "number" },
-          "minWidth": { "type": "number" },
           "name": { "type": "string" },
           "options": { "type": "object" },
           "orientation": { "type": "string" },
@@ -385,8 +400,6 @@
           "height": { "type": "number" },
           "local": { "type": "boolean" },
           "maxWidth": { "type": "number" },
-          "minWidth": { "type": "number" },
-          "minHeight": { "type": "number" },
           "name": { "type": "string" },
           "options": { "type": "object" },
           "orientation": { "type": "string" },
