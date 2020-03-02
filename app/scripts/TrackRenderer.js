@@ -17,6 +17,7 @@ import LeftAxisTrack from './LeftAxisTrack';
 import CombinedTrack from './CombinedTrack';
 import BedLikeTrack from './BedLikeTrack';
 import OverlayTrack from './OverlayTrack';
+import OverlayEditableTrack from './OverlayEditableTrack';
 
 import HorizontalLine1DPixiTrack from './HorizontalLine1DPixiTrack';
 import HorizontalPoint1DPixiTrack from './HorizontalPoint1DPixiTrack';
@@ -1743,6 +1744,19 @@ class TrackRenderer extends React.Component {
 
       case 'overlay-track':
         return new OverlayTrack(context, options);
+
+      case 'overlay-editable-track':
+        if (
+          track.registerViewportChanged &&
+          track.removeViewportChanged &&
+          track.setExtentCallback
+        ) {
+          context.registerViewportChanged = track.registerViewportChanged;
+          context.removeViewportChanged = track.removeViewportChanged;
+          context.setExtentCallback = track.setExtentCallback;
+          return new OverlayEditableTrack(context, options);
+        }
+        return new Track(context, options);
 
       case 'overlay-chromosome-grid-track':
         context.isOverlay = true;

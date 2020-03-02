@@ -1877,7 +1877,7 @@ class HiGlassComponent extends React.Component {
         fromViewUid: fromView
       };
 
-      this.addCallbacks(toView, newTrack);
+      this.addViewportProjectionCallbacks(toView, newTrack);
       this.handleTrackAdded(toView, newTrack, position, hostTrack);
     }
     this.setState({
@@ -2898,7 +2898,7 @@ class HiGlassComponent extends React.Component {
    *
    * @param track: A view with tracks.
    */
-  addCallbacks(viewUid, track) {
+  addViewportProjectionCallbacks(viewUid, track) {
     if (
       track.type === 'viewport-projection-center' ||
       track.type === 'viewport-projection-horizontal' ||
@@ -2961,6 +2961,33 @@ class HiGlassComponent extends React.Component {
         }
       };
     }
+  }
+
+  addOverlayEditableCallbacks(viewUid, overlay) {
+    overlay.registerViewportChanged = (trackId, listener) =>
+      this.addScalesChangedListener(viewUid, trackId, listener);
+    overlay.removeViewportChanged = trackId =>
+      this.removeScalesChangedListener(viewUid, trackId);
+    overlay.setExtentCallback = newExtent => {
+      // If there is no `fromView`, then there must be a `projectionXDomain` instead.
+      // Update the viewconfig to reflect the new `projectionXDomain` array
+      // on the `viewport-projection-horizontal` track.
+      const { viewConfig } = this.state;
+      const newViewConfig = viewConfig;
+      for (const [viewI, view] of viewConfig.views.entries()) {
+        if (view.uid === viewUid) {
+          for (const [overlayI, otherOverlay] of view.overlays.entries()) {
+            if (otherOverlay.uid === overlay.uid) {
+              newViewConfig.views[viewI].overlays[
+                overlayI
+              ].options.extent = newExtent;
+            }
+          }
+        }
+      }
+      const newViews = this.processViewConfig(newViewConfig);
+      this.setState({ views: newViews, viewConfig: newViewConfig });
+    };
   }
 
   validateLocks(locks) {
@@ -3312,7 +3339,7 @@ class HiGlassComponent extends React.Component {
     newView.layout.i = newView.uid;
 
     visitPositionedTracks(newView.tracks, track => {
-      this.addCallbacks(newView.uid, track);
+      this.addViewportProjectionCallbacks(newView.uid, track);
     });
 
     this.setState(prevState => {
@@ -3706,7 +3733,7 @@ class HiGlassComponent extends React.Component {
       visitPositionedTracks(v.tracks, track => {
         if (!track.uid) track.uid = slugid.nice();
 
-        this.addCallbacks(v.uid, track);
+        this.addViewportProjectionCallbacks(v.uid, track);
         this.addDefaultTrackOptions(track);
 
         if (track.contents) {
@@ -3714,6 +3741,12 @@ class HiGlassComponent extends React.Component {
           for (const ct of track.contents) this.addDefaultTrackOptions(ct);
         }
       });
+
+      if (v.overlays) {
+        v.overlays.forEach(overlay => {
+          this.addOverlayEditableCallbacks(v.uid, overlay);
+        });
+      }
 
       // make sure that the layout for this view refers to this view
       if (v.layout) {
