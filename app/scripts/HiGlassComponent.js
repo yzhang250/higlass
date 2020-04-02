@@ -1494,7 +1494,7 @@ class HiGlassComponent extends React.Component {
         // TODO: I have no idea why dimensions are doubled!
         targetCanvas.width = this.canvasElement.width / 2;
         targetCanvas.height = this.canvasElement.height / 2;
-        targetCanvas.getContext('2d').drawImage(img, 0, 0);
+        targetCanvas.getContext('2d').drawImage(img, 0, -this.canvasElement.height);
         targetCanvas.toBlob(blob => {
           resolve(blob);
         });
